@@ -1,4 +1,4 @@
-name: Semantic Versioning
+name: Versioning and Docker Image Release
 
 on:
   push:
