@@ -70,7 +70,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: toLowerCase
-        run: INPUT=${{ github.repository }} echo "::set-output name=lowerCaseValue::${INPUT,,}"
+        run: echo "repository=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
         id: push
@@ -82,5 +82,5 @@ jobs:
           tags: |
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
-            ghcr.io/${{steps.toLowerCase.outputs.lowerCaseValue}}:${{ needs.assign-version.outputs.version }}
-            ghcr.io/${{steps.toLowerCase.outputs.lowerCaseValue}}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
+            ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}
+            ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
