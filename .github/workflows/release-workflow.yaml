@@ -80,7 +80,9 @@ jobs:
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
+            ralnoc/vintagestory:latest
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
+            ghcr.io/${{steps.toLowerCase.outputs.repository}}:latest
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
