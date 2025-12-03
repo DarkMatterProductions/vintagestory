@@ -80,7 +80,7 @@ jobs:
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
-            ralnoc/vintagestory:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}
-            ralnoc/vintagestory:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}-python3-trixie-slim
-            ghcr.io/${{ github.repository }}:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}
-            ghcr.io/${{ github.repository }}:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}-python3-trixie-slim
+            ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}
+            ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
+            ghcr.io/${{steps.toLowerCase.outputs.lowerCaseValue}}:${{ needs.assign-version.outputs.version }}
+            ghcr.io/${{steps.toLowerCase.outputs.lowerCaseValue}}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
