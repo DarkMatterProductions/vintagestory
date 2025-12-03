@@ -22,6 +22,14 @@ ARG DOTNET_VERSION=8.0
 ENV VS_VERSION=${VS_VERSION}
 ENV DOTNET_VERSION=${DOTNET_VERSION}
 
+LABEL org.opencontainers.image.source=https://github.com/DarkMatterProductions/vintagestory
+LABEL org.opencontainers.image.description="Vintage Story Dedicated Server on Ubuntu 24.04"
+LABEL org.opencontainers.image.licenses=MIT
+LABEL in.dmpsys.maintainer="DarkMatter Productions"
+LABEL in.dmpsys.project="Vintage Story Dedicated Server"
+LABEL in.dmpsys.website="https://github.com/DarkMatterProductions/vintagestory"
+LABEL in.dmpsys.vsversion="${VS_VERSION}"
+
 
 # Server configuration defaults (can be overridden with -e flags at runtime)
 ENV SERVER_NAME="Vintage Story Server"
