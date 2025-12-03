@@ -12,7 +12,7 @@ jobs:
       issues: read
       pull-requests: write
     steps:
-      - uses: nearform-actions/github-action-check-linked-issues@v1
+      - uses: DarkMatterProductions/github-action-check-linked-issues@245980de51d5655075c6c65a5a25ed607625323b
         id: check-linked-issues
         with:
           exclude-branches: "release/**, dependabot/**"
