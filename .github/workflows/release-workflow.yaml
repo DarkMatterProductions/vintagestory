@@ -18,10 +18,11 @@ jobs:
       id-token: write
 
     steps:
-      - name: Check out the repo
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-tags: true
+
 
       - name: Set up Python
         uses: actions/setup-python@v4
