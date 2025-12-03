@@ -69,6 +69,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Use change string case action
+        id: string  # Give the step an ID to reference its outputs
+        uses: DarkMatterProductions/change-string-case-action@v6
+        with:
+          string: ${{ github.repository }}
+
       - name: Build and push Docker images
         id: push
         uses: DarkMatterProductions/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
@@ -77,7 +83,7 @@ jobs:
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
-            ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}
-            ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
-            ghcr.io/${{ github.repository }}:${{ needs.assign-version.outputs.version }}
-            ghcr.io/${{ github.repository }}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
+            ralnoc/vintagestory:${{ steps.string.outputs.lowercase }}
+            ralnoc/vintagestory:${{ steps.string.outputs.lowercase }}-python3-trixie-slim
+            ghcr.io/${{ github.repository }}:${{ steps.string.outputs.lowercase }}
+            ghcr.io/${{ github.repository }}:${{ steps.string.outputs.lowercase }}-python3-trixie-slim
