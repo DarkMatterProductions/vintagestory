@@ -69,11 +69,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Use change string case action
-        id: string  # Give the step an ID to reference its outputs
-        uses: DarkMatterProductions/change-string-case-action@6a0351af26d279c587b873c54b460b450158a9e9
-        with:
-          string: ${{ github.repository }}
+      - id: toLowerCase
+        run: INPUT=${{ github.repository }} echo "::set-output name=lowerCaseValue::${INPUT,,}"
 
       - name: Build and push Docker images
         id: push
@@ -83,7 +80,7 @@ jobs:
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
-            ralnoc/vintagestory:${{ steps.string.outputs.lowercase }}
-            ralnoc/vintagestory:${{ steps.string.outputs.lowercase }}-python3-trixie-slim
-            ghcr.io/${{ github.repository }}:${{ steps.string.outputs.lowercase }}
-            ghcr.io/${{ github.repository }}:${{ steps.string.outputs.lowercase }}-python3-trixie-slim
+            ralnoc/vintagestory:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}
+            ralnoc/vintagestory:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}-python3-trixie-slim
+            ghcr.io/${{ github.repository }}:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}
+            ghcr.io/${{ github.repository }}:echo ${{steps.toLowerCase.outputs.lowerCaseValue}}-python3-trixie-slim
