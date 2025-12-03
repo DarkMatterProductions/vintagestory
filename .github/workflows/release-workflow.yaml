@@ -1,4 +1,4 @@
-name: Semantic Versioning
+name: Versioning and Docker Image Release
 
 on:
   push:
@@ -16,11 +16,10 @@ jobs:
       contents: read
       attestations: write
       id-token: write
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6.0.1
-        with:
-          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v4
