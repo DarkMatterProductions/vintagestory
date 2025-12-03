@@ -84,10 +84,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
             ralnoc/vintagestory:latest
-            ralnoc/vintagestory:${{ needs.VintageStoryVersion.outputs.version }}
+            ralnoc/vintagestory:${{ steps.VintageStoryVersion.outputs.version }}
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:latest
-            ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.VintageStoryVersion.outputs.version }}
+            ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ steps.VintageStoryVersion.outputs.version }}
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
