@@ -2,7 +2,7 @@ name: Check linked issues
 
 on:
   pull_request_target:
-    types: [edited, synchronize]
+    types: [opened, edited, reopened, synchronize]
 
 jobs:
   check_pull_requests:
