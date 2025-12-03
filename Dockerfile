@@ -1,8 +1,8 @@
-# Vintage Story Server Docker Image for Ubuntu 24.04
+# Vintage Story Server Docker Image for Debian 13 (Trixie)
 # Based on the official Vintage Story server installation instructions, and extracted from server.sh
 # for better Docker compatibility.
 # Official guide: https://wiki.vintagestory.at/Guide:Dedicated_Server#Dedicated_server_on_Linux
-FROM ubuntu:24.04
+FROM python:3.10-slim-trixie
 
 EXPOSE 42420
 
@@ -80,7 +80,7 @@ ENV WORLDCONFIG_ALLOW_MAP=true
 
 # Install dependencies
 RUN apt update && \
-    apt install -yf wget curl vim gosu python3 python3-pip
+    apt install -yf wget curl vim gosu
 
 # Install PyYAML
 RUN pip3 install --break-system-packages pyyaml
@@ -94,7 +94,7 @@ RUN apt install -y ca-certificates gnupg && \
     apt install -y mono-complete
 
 # Install required .Net runtime
-RUN wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+RUN wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
     apt update && \
