@@ -33,7 +33,6 @@ jobs:
         run: python3 semver.py
 
   push_to_registries:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Push Docker image to multiple registries
     runs-on: ubuntu-latest
     permissions:
