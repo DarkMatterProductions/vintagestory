@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6.0.1
+        with:
+          fetch-tags: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
