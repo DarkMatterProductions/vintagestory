@@ -1,14 +1,37 @@
-name: Publish Docker image
-
+name: Semantic Versioning
 
 on:
-  workflow_run:
-    workflows: [Semantic Versioning]
-    branches: [main]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tag detection
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run semantic versioning
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 semver.py
+
   push_to_registries:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Push Docker image to multiple registries
