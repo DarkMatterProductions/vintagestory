@@ -73,8 +73,8 @@ jobs:
         uses: DarkMatterProductions/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           tags: |
-            type=raw,value=${{ needs.assign-version.outputs.version }}
-            type=raw,value=${{ needs.assign-version.outputs.version }}-python3-trixie-slim
+            # tag event
+            type=ref,event=tag
           images: |
             ralnoc/vintagestory
             ghcr.io/${{ github.repository }}
