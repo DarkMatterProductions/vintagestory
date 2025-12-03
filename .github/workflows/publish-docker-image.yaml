@@ -1,12 +1,16 @@
 name: Publish Docker image
 
+
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Versioning Release"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
   push_to_registries:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Push Docker image to multiple registries
     runs-on: ubuntu-latest
     permissions:
@@ -47,10 +51,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true

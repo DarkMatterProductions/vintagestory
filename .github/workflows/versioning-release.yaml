@@ -1,0 +1,18 @@
+name: Versioning Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  versioning:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Assign Version
+        uses: huggingface/semver-release-action@1a164868d29fb12acd39d70e8e47326db9d78ad2
