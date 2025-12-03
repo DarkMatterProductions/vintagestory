@@ -11,11 +11,16 @@ permissions:
 jobs:
   version:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Check out the repo
+        uses: actions/checkout@v6.0.1
         with:
-          fetch-depth: 0  # Fetch all history for tag detection
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -31,18 +36,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 semver.py
-
-  push_to_registries:
-    name: Push Docker image to multiple registries
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v6.0.1
 
       - name: Log in to Docker Hub
         uses: DarkMatterProductions/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
