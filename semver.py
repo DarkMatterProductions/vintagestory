@@ -229,6 +229,10 @@ def main():
 
     print(f"New version: {new_version}\n")
 
+    # Output version for GitHub Actions
+    with open(os.environ.get('GITHUB_OUTPUT', ''), 'a') as f:
+        f.write(f'version={new_version}\n')
+
     # Step 4: Create git tag
     print("Creating git tag...")
     create_git_tag(new_version)
@@ -240,10 +244,6 @@ def main():
     # Step 6: Create GitHub release
     print("\nCreating GitHub release...")
     create_github_release(new_version, zip_filename)
-
-    # Output version for GitHub Actions
-    with open(os.environ.get('GITHUB_OUTPUT', ''), 'a') as f:
-        f.write(f'version={new_version}\n')
 
     print("\n=== Versioning Complete ===")
 
