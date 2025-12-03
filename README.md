@@ -37,17 +37,17 @@ docker run -d \
   -p 42420:42420/udp \
   -v /path/to/your/vs/data:/vintagestory/data \
   --restart unless-stopped \
-  ghcr.io/ralnoc/vintagestory
+  ghcr.io/darkmatterproductions/vintagestory:0.0.18
 ```
 Note: Replace `/path/to/your/vs/data` with the path to the directory one your server, where you want to persist your 
 Vintage Story server data. This is critical to ensure that your world data, configurations, and mods are not lost when 
 upgrading, which results in the container being removed.
 
 When starting the server, remember to map the data directory to a persistent volume on your host machine to ensure 
-that your server data is not lost when the container is removed. If you leverage the docker image 
-`ghcr.io/ralnoc/vintagestory`, it will always install the latest version of Vintage Story server. This will 
-dramatically simplify the upgrade process, and removes any issues with the in place upgrade, as you are replacing the 
-image, not upgrading in place. 
+that your server data is not lost when the container is removed. If you leverage our published docker image at
+`ghcr.io/darkmatterproductions/vintagestory` or `ralnoc/vintagestory`, it will always install the latest version 
+of Vintage Story server. This will dramatically simplify the upgrade process, and removes any issues with the in
+place upgrade, as you are replacing the image, not upgrading in place. 
 
 ### Configuration
 There are four options for handling configuration of the Vintage Story server:
@@ -95,7 +95,7 @@ docker run -d \
   -e ENABLE_CHAT_LOGGING=true \
   -e VS_CFG_SERVER_NAME="My Vintage Story Server" \
   --restart unless-stopped \
-  ghcr.io/ralnoc/vintagestory
+  ghcr.io/darkmatterproductions/vintagestory:0.0.18
 
 ```
 
