@@ -241,6 +241,10 @@ def main():
     print("\nCreating GitHub release...")
     create_github_release(new_version, zip_filename)
 
+    # Output version for GitHub Actions
+    with open(os.environ.get('GITHUB_OUTPUT', ''), 'a') as f:
+        f.write(f'version={new_version}\n')
+
     print("\n=== Versioning Complete ===")
 
 

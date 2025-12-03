@@ -16,6 +16,8 @@ jobs:
       contents: write
       attestations: write
       id-token: write
+    outputs:
+      version: ${{ steps.semver.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -71,10 +73,8 @@ jobs:
         uses: DarkMatterProductions/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{version}}-python3-trixie-slim
-            type=semver,pattern={{major}}.{{minor}}-python3-trixie-slim
+            type=raw,value=${{ needs.assign-version.outputs.version }}
+            type=raw,value=${{ needs.assign-version.outputs.version }}-python3-trixie-slim
           images: |
             ralnoc/vintagestory
             ghcr.io/${{ github.repository }}
