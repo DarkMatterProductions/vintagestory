@@ -151,17 +151,19 @@ def determine_new_version(current_version: str, commits: List[str]) -> Optional[
     return new_version
 
 
-def create_zip(repo_name: str, version: str) -> str:
+def create_zip(repo_name: str, version: str) -> Path:
     """
     Create a zip file excluding .git and .github directories.
     Returns the filename of the created zip.
     """
-    zip_filename = f'{repo_name}-{version}.zip'
+    build_dir = Path('build')
+    build_dir.mkdir(exist_ok=True)
+    zip_filename = build_dir / f'{repo_name}-{version}.zip'
 
     with ZipFile(zip_filename, 'w') as zf:
         for root, dirs, files in os.walk('.'):
-            # Remove .git and .github from dirs to prevent traversal
-            dirs[:] = [d for d in dirs if d not in ['.git', '.github']]
+            # Remove .git, .github, and build from dirs to prevent traversal
+            dirs[:] = [d for d in dirs if d not in ['.git', '.github', 'build']]
 
             for file in files:
                 file_path = Path(root) / file
@@ -187,7 +189,7 @@ def create_git_tag(version: str):
         raise
 
 
-def create_github_release(version: str, zip_filename: str):
+def create_github_release(version: str, zip_filename: Path):
     """Create a GitHub release with the zip file as an artifact."""
     try:
         subprocess.run([
