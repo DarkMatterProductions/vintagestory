@@ -3,7 +3,7 @@ name: Publish Docker image
 
 on:
   workflow_run:
-    workflows: ["Versioning Release"]
+    workflows: [Semantic Versioning]
     branches: [main]
     types:
       - completed
