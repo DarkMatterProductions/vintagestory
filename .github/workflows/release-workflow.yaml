@@ -71,7 +71,7 @@ jobs:
 
       - name: Use change string case action
         id: string  # Give the step an ID to reference its outputs
-        uses: DarkMatterProductions/change-string-case-action@v6
+        uses: DarkMatterProductions/change-string-case-action@6a0351af26d279c587b873c54b460b450158a9e9
         with:
           string: ${{ github.repository }}
 
