@@ -72,6 +72,9 @@ jobs:
       - id: toLowerCase
         run: echo "repository=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
+      - id: VintageStoryVersion
+        run: cat vintage-story-version.txt >> $GITHUB_OUTPUT
+
       - name: Build and push Docker images
         id: push
         uses: DarkMatterProductions/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
@@ -81,8 +84,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
             ralnoc/vintagestory:latest
+            ralnoc/vintagestory:${{ needs.VintageStoryVersion.outputs.version }}
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}
             ralnoc/vintagestory:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:latest
+            ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.VintageStoryVersion.outputs.version }}
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}
             ghcr.io/${{steps.toLowerCase.outputs.repository}}:${{ needs.assign-version.outputs.version }}-python3-trixie-slim
