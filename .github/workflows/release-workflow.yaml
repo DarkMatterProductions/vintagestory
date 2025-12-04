@@ -34,6 +34,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          pip-install: pyyaml
 
       - name: Run semantic versioning
         id: semver
@@ -56,6 +57,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          pip-install: pyyaml
+
       - name: Log in to Docker Hub
         uses: DarkMatterProductions/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
@@ -73,7 +80,7 @@ jobs:
         run: echo "repository=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
       - id: VintageStoryVersion
-        run: echo "version=$(cat vintage-story-version.txt)" >> $GITHUB_OUTPUT
+        run: f = open('vintage-story-version.yaml', 'r') ; vs_version_yaml = yaml.safe_load(f) ; print(vs_version_yaml['vs_version']) ; f.close() >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
         id: push

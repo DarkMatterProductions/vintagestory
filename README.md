@@ -1,5 +1,12 @@
 ![Official game logo for Vinstage Story as published by the developer Anego Studios](./images/vintage-story.png "Vintage Story Logo")
 
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/DarkmatterProductions/vintagestory/release-workflow.yaml?branch=main&style=flat&label=Image%20Build&link=https%3A%2F%2Fgithub.com%2FDarkMatterProductions%2Fvintagestory%2Fpkgs%2Fcontainer%2Fvintagestory)](https://github.com/DarkMatterProductions/vintagestory)
+[![GitHub Release](https://img.shields.io/github/v/release/DarkmatterProductions/vintagestory?display_name=release&style=flat&label=Latest%20Stable%20Release&color=blue)](https://github.com/DarkMatterProductions/vintagestory/pkgs/container/vintagestory/?tag=latest)
+[![GitHub contributors](https://img.shields.io/github/contributors/DarkmatterProductions/vintagestory?style=flat&label=Contributors&color=%234B86EB)](https://github.com/DarkMatterProductions/vintagestory/graphs/contributors)
+
+
+[![Docker Stars](https://img.shields.io/docker/stars/ralnoc/vintagestory?style=flat&label=Docker%20Stars&color=purple)](https://hub.docker.com/r/ralnoc/vintagestory)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ralnoc/vintagestory?style=flat&label=Docker%20Pulls&color=%23621747)](https://hub.docker.com/r/ralnoc/vintagestory)
 ## Table of Contents
 - [About Vintage Story](#about-vintage-story)
 - [Dedicated Server Docker Image](#dedicated-server-docker-image)
