@@ -8,7 +8,6 @@ services:
     volumes:
       - ./vintage_story/data:/var/vintagestory/data
     environment:
-      - VS_VERSION=1.21.5
       - SERVER_NAME="My Vintage Story Server"
       - SERVER_DESCRIPTION="A cozy place to try and survive Vintage Story"
       - MAX_CLIENTS=16
