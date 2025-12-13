@@ -37,7 +37,7 @@ docker run -d \
   -p 42420:42420/udp \
   -v /path/to/your/vs/data:/vintagestory/data \
   --restart unless-stopped \
-  ghcr.io/darkmatterproductions/vintagestory:0.0.18
+  ghcr.io/darkmatterproductions/vintagestory:latest
 ```
 Note: Replace `/path/to/your/vs/data` with the path to the directory one your server, where you want to persist your 
 Vintage Story server data. This is critical to ensure that your world data, configurations, and mods are not lost when 
@@ -95,7 +95,7 @@ docker run -d \
   -e ENABLE_CHAT_LOGGING=true \
   -e VS_CFG_SERVER_NAME="My Vintage Story Server" \
   --restart unless-stopped \
-  ghcr.io/darkmatterproductions/vintagestory:0.0.18
+  ghcr.io/darkmatterproductions/vintagestory:latest
 
 ```
 
@@ -106,13 +106,13 @@ command: `docker logs vintagestory-server`.
 ### Building the Docker Image
 To build the Docker image locally, use the following command:
 ```bash
-docker build -t vintagestory:1.21.5 --build-arg VS_VERSION=1.21.5 --build-arg DOTNET_VERSION=8.0 .
+docker build -t vintagestory:1.21.6 --build-arg VS_VERSION=1.21.6 --build-arg DOTNET_VERSION=8.0 .
 ```
-This command builds the Docker image and tags it as `vintagestory:1.21.5`. You can replace `1.21.5` with the desired 
+This command builds the Docker image and tags it as `vintagestory:1.21.6`. You can replace `1.21.6` with the desired 
 version of Vintage Story by changing the `VS_VERSION` build argument. If building on a linux server, you can use an 
 environment variable to set the version:
 ```bash
-export VS_VERSION=1.21.5
+export VS_VERSION=1.21.6
 export DOTNET_VERSION=8.0
 docker build -t vintagestory:$VS_VERSION --build-arg VS_VERSION=$VS_VERSION --build-arg DOTNET_VERSION=$DOTNET_VERSION .
 ```
@@ -152,9 +152,8 @@ services:
         build:
             context: .
             args:
-                VS_VERSION: 1.21.5
+                VS_VERSION: 1.21.6
                 DOTNET_VERSION: 8.0
-        image: vintagestory:1.21.5
         container_name: vintagestory-server
         ports:
         - "42420:42420/tcp"
