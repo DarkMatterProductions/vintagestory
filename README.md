@@ -4,6 +4,9 @@
 [![GitHub Release](https://img.shields.io/github/v/release/DarkmatterProductions/vintagestory?display_name=release&style=flat&label=Latest%20Stable%20Release&color=blue)](https://github.com/DarkMatterProductions/vintagestory/pkgs/container/vintagestory/?tag=latest)
 [![GitHub contributors](https://img.shields.io/github/contributors/DarkmatterProductions/vintagestory?style=flat&label=Contributors&color=%234B86EB)](https://github.com/DarkMatterProductions/vintagestory/graphs/contributors)
 
+![Dynamic YAML Badge](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FDarkMatterProductions%2Fvintagestory%2Frefs%2Fheads%2FGH-43%2Fvintage-story-version.yaml&query=vs_stable_version&style=flat&label=Vintage%20Story%20Stable%20Version&color=%23fac746)
+![Dynamic YAML Badge](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FDarkMatterProductions%2Fvintagestory%2Frefs%2Fheads%2FGH-43%2Fvintage-story-version.yaml&query=vs_unstable_version&style=flat&label=Vintage%20Story%20Unstable%20Version&color=%23fac746)
+
 
 [![Docker Stars](https://img.shields.io/docker/stars/ralnoc/vintagestory?style=flat&label=Docker%20Stars&color=purple)](https://hub.docker.com/r/ralnoc/vintagestory)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ralnoc/vintagestory?style=flat&label=Docker%20Pulls&color=%23621747)](https://hub.docker.com/r/ralnoc/vintagestory)

@@ -1,2 +1,3 @@
 ---
-vs_version: 1.21.5
+vs_stable_version: 1.21.5
+vs_unstable_version: 1.21.6-rc.1
