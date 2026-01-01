@@ -6,6 +6,7 @@ Supports conventional commits: feat:, fix:, and BREAKING CHANGE
 import subprocess
 import os
 import re
+import yaml
 from pathlib import Path
 from zipfile import ZipFile
 from typing import Tuple, List, Optional
@@ -151,14 +152,14 @@ def determine_new_version(current_version: str, commits: List[str]) -> Optional[
     return new_version
 
 
-def create_zip(repo_name: str, version: str) -> Path:
+def create_zip(repo_name: str, vs_version: str, version: str) -> Path:
     """
     Create a zip file excluding .git and .github directories.
     Returns the filename of the created zip.
     """
     build_dir = Path('build')
     build_dir.mkdir(exist_ok=True)
-    zip_filename = build_dir / f'{repo_name}-{version}.zip'
+    zip_filename = build_dir / f'{repo_name}-{vs_version}-{version}.zip'
 
     with ZipFile(zip_filename, 'w') as zf:
         for root, dirs, files in os.walk('.'):
@@ -189,14 +190,14 @@ def create_git_tag(version: str):
         raise
 
 
-def create_github_release(version: str, zip_filename: Path):
+def create_github_release(vs_version: str, version: str, zip_filename: Path):
     """Create a GitHub release with the zip file as an artifact."""
     try:
         subprocess.run([
             'gh', 'release', 'create', version,
             zip_filename,
-            '--title', f'Release {version}',
-            '--notes', f'Automated release for version {version}'
+            '--title', f'{vs_version}-{version}',
+            '--notes', f'Automated release for Vintage Story version {vs_version} - Release {version}'
         ], check=True)
         print(f"Created GitHub release for {version}")
     except subprocess.CalledProcessError as e:
@@ -233,17 +234,22 @@ def main():
     with open(os.environ.get('GITHUB_OUTPUT', ''), 'a') as f:
         f.write(f'version={new_version}\n')
 
+    # Read Vintage Story version from file
+    with open('vintage-story-version.yaml', 'r') as f:
+        vs_version_yaml = yaml.safe_load(f)
+        vs_version = vs_version_yaml['vs_version']
+
     # Step 4: Create git tag
     print("Creating git tag...")
     create_git_tag(new_version)
 
     # Step 5: Create zip file
     print("\nCreating release artifact...")
-    zip_filename = create_zip(repo_name, new_version)
+    zip_filename = create_zip(repo_name, vs_version, new_version)
 
     # Step 6: Create GitHub release
     print("\nCreating GitHub release...")
-    create_github_release(new_version, zip_filename)
+    create_github_release(vs_version, new_version, zip_filename)
 
     print("\n=== Versioning Complete ===")
 
