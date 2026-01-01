@@ -159,7 +159,7 @@ def create_zip(repo_name: str, vs_version: str, version: str) -> Path:
     """
     build_dir = Path('build')
     build_dir.mkdir(exist_ok=True)
-    zip_filename = build_dir / f'{repo_name}-{vs_version}={version}.zip'
+    zip_filename = build_dir / f'{repo_name}-{vs_version}-{version}.zip'
 
     with ZipFile(zip_filename, 'w') as zf:
         for root, dirs, files in os.walk('.'):
