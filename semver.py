@@ -237,7 +237,7 @@ def main():
     # Read Vintage Story version from file
     with open('vintage-story-version.yaml', 'r') as f:
         vs_version_yaml = yaml.safe_load(f)
-        vs_version = vs_version_yaml['vs_version']
+        vs_version = vs_version_yaml['vs_stable_version']
 
     # Step 4: Create git tag
     print("Creating git tag...")
