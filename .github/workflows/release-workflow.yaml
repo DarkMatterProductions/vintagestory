@@ -80,7 +80,7 @@ jobs:
         run: echo "repository=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
       - id: VintageStoryVersion
-        run: python3 -c "import yaml ; f = open('vintage-story-version.yaml', 'r') ; vs_version_yaml = yaml.safe_load(f) ; print(vs_version_yaml['vs_stable_version']) ; f.close()" >> $GITHUB_OUTPUT
+        run: python3 -c "import yaml ; f = open('vintage-story-version.yaml', 'r') ; vs_version_yaml = yaml.safe_load(f) ; stable_version = vs_version_yaml['vs_stable_version'] ; print(f'version={stable_version}') ; f.close()" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
         id: push
