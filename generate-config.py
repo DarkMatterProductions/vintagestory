@@ -20,26 +20,26 @@ class VintageStoryConfig:
         self.config_json_path = None
         self.default_config_yaml_path = Path(os.getenv("HOMEPATH", "/vintagestory")) / "server-config.yaml"
         self.env_setting_map = {
-            "VS_CFG_SERVER_NAME": "ServerName",
-            "VS_CFG_SERVER_URL": "ServerUrl",
-            "VS_CFG_SERVER_DESCRIPTION": "ServerDescription",
-            "VS_CFG_WELCOME_MESSAGE": "WelcomeMessage",
-            "VS_CFG_ALLOW_CREATIVE_MODE": "AllowCreativeMode",
-            "VS_CFG_SERVER_IP": "Ip",
-            "VS_CFG_SERVER_PORT": "Port",
-            "VS_CFG_SERVER_UPNP": "Upnp",
-            "VS_CFG_SERVER_COMPRESS_PACKETS": "CompressPackets",
-            "VS_CFG_ADVERTISE_SERVER": "AdvertiseServer",
-            "VS_CFG_MAX_CLIENTS": "MaxClients",
-            "VS_CFG_PASS_TIME_WHEN_EMPTY": "PassTimeWhenEmpty",
-            "VS_CFG_SERVER_PASSWORD": "Password",
-            "VS_CFG_MAX_CHUNK_RADIUS": "MaxChunkRadius",
-            "VS_CFG_SERVER_LANGUAGE": "ServerLanguage",
-            "VS_CFG_ONLY_WHITELISTED": "OnlyWhitelisted",
-            "VS_CFG_ANTIABUSE": "AntiAbuse",
-            "VS_CFG_ALLOW_PVP": "AllowPvP",
-            "VS_CFG_HOSTED_MODE": "HostedMode",
-            "VS_CFG_HOSTED_MODE_ALLOW_MODS": "HostedModeAllowMods",
+            "VS_CFG_SERVER_NAME": ["ServerName", "string"],
+            "VS_CFG_SERVER_URL": ["ServerUrl", "string"],
+            "VS_CFG_SERVER_DESCRIPTION": ["ServerDescription", "string"],
+            "VS_CFG_WELCOME_MESSAGE": ["WelcomeMessage", "string"],
+            "VS_CFG_ALLOW_CREATIVE_MODE": ["AllowCreativeMode", "boolean"],
+            "VS_CFG_SERVER_IP": ["Ip", "string"],
+            "VS_CFG_SERVER_PORT": ["Port", "integer"],
+            "VS_CFG_SERVER_UPNP": ["Upnp", "boolean"],
+            "VS_CFG_SERVER_COMPRESS_PACKETS": ["CompressPackets", "boolean"],
+            "VS_CFG_ADVERTISE_SERVER": ["AdvertiseServer", "boolean"],
+            "VS_CFG_MAX_CLIENTS": ["MaxClients", "integer"],
+            "VS_CFG_PASS_TIME_WHEN_EMPTY": ["PassTimeWhenEmpty", "boolean"],
+            "VS_CFG_SERVER_PASSWORD": ["Password", "string"],
+            "VS_CFG_MAX_CHUNK_RADIUS": ["MaxChunkRadius", "integer"],
+            "VS_CFG_SERVER_LANGUAGE": ["ServerLanguage", "string"],
+            "VS_CFG_ENFORCE_WHITELIST": ["WhitelistMode", "bitwise"],
+            "VS_CFG_ANTIABUSE": ["AntiAbuse", "bitwise"],
+            "VS_CFG_ALLOW_PVP": ["AllowPvP", "boolean"],
+            "VS_CFG_HOSTED_MODE": ["HostedMode", "boolean"],
+            "VS_CFG_HOSTED_MODE_ALLOW_MODS": ["HostedModeAllowMods", "boolean"],
         }
         self.config = self.load_config()
 
@@ -50,13 +50,31 @@ class VintageStoryConfig:
                 return yaml.safe_load(f)
         else:
             return {}
+
+    @staticmethod
+    def convert_value(value: str, value_type: str):
+        """Convert string value from environment variable to the appropriate type."""
+        if value_type == "boolean":
+            return value.lower() in ("0", "true", "yes")
+        elif value_type == "integer":
+            return int(value)
+        elif value_type == "string":
+            return str(value)
+        elif value_type == "bitwise":
+            # This is a bitwise flag, we need to convert it to a boolean string
+            if value.lower() in ("0", "true", "yes"):
+                return "0"
+            else:
+                return "1"
+        else:
+            raise ValueError(f"Unsupported value type: {value_type}")
         
     def generate_serverconfig(self):
         """Generate config and apply overrides from environment variables."""
         if "VS_CFG_ALLOW_CREATIVE_MODE" in os.environ:
             print("Allowing Creative Mode")
             self.config["WorldConfig"]["AllowCreativeMode"] = os.environ.pop("VS_CFG_ALLOW_CREATIVE_MODE").lower() in ("1", "true", "yes")
-        overrides = {self.env_setting_map[env_key]: os.environ[env_key] for env_key in os.environ.keys() if env_key.startswith("VS_CFG_")}
+        overrides = {self.env_setting_map[env_key][0]: self.convert_value(os.environ[env_key], self.env_setting_map[env_key][1]) for env_key in os.environ.keys() if env_key.startswith("VS_CFG_")}
         self.config.update(overrides)
         if overrides:
             print("Applied the following overrides from environment variables:")

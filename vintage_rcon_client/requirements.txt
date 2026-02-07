@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-socketio
+aiohttp
+python-engineio[asyncio]
+pyyaml
+rcon
+Authlib
+httpx
+requests
+aiofiles
+jinja2
+python-jose[cryptography]
+passlib[bcrypt]
+itsdangerous

@@ -78,33 +78,20 @@ ENV WORLDCONFIG_TOOL_DURABILITY="1"
 ENV WORLDCONFIG_ALLOW_COORDINATES=true
 ENV WORLDCONFIG_ALLOW_MAP=true
 
-# Install dependencies
-RUN apt update && \
-    apt install -yf wget curl vim gosu
-
-# Install PyYAML
-RUN pip3 install --break-system-packages pyyaml
-
-# Install Mono
-RUN apt install -y ca-certificates gnupg && \
-    gpg --homedir /tmp --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF && \
-    chmod +r /usr/share/keyrings/mono-official-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/ubuntu stable-focal main" | tee /etc/apt/sources.list.d/mono-official-stable.list && \
-    apt update && \
-    apt install -y mono-complete
-
 # Install required .Net runtime
 RUN wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
     apt update && \
-    apt install -y aspnetcore-runtime-${DOTNET_VERSION}
+    apt install -yf wget curl vim gosu screen procps && \
+    apt install -y aspnetcore-runtime-${DOTNET_VERSION} && \
+    apt clean && rm -rf /var/lib/apt/lists/*
 
 # Add user
 ENV UID_NUMBER=1100
 ENV GID_NUMBER=1100
-RUN groupadd -g ${GID_NUMBER} ${USERNAME}
-RUN useradd -u ${UID_NUMBER} -g ${GID_NUMBER} -d ${HOMEPATH} -ms /bin/bash ${USERNAME}
+RUN groupadd -g ${GID_NUMBER} ${USERNAME} && \
+    useradd -u ${UID_NUMBER} -g ${GID_NUMBER} -d ${HOMEPATH} -ms /bin/bash ${USERNAME}
 
 WORKDIR ${HOMEPATH}
 
@@ -114,12 +101,17 @@ RUN wget -P ${VSPATH} https://cdn.vintagestory.at/gamefiles/stable/vs_server_lin
     rm ${VSPATH}/vs_server_linux-x64_${VS_VERSION}.tar.gz && \
     chown -R ${USERNAME}: ${HOMEPATH}
 
+RUN python -m pip install --no-cache-dir -r "/vintage_rcon_client/requirements.txt" && \
+    pip3 install --break-system-packages pyyaml
+
 # Copy entrypoint and config generator
 COPY entrypoint.sh ${HOMEPATH}/entrypoint.sh
 COPY generate-config.py ${HOMEPATH}/generate-config.py
 COPY server-config.yaml ${HOMEPATH}/server-config.yaml
+COPY vintage_rcon_client /vintage_rcon_client
+
 # Set permissions, change ownership
 RUN chmod 755 ${HOMEPATH}/entrypoint.sh && \
-    chown ${USERNAME}: ${HOMEPATH}/*
+    chown -R ${USERNAME}: ${HOMEPATH}
 
 ENTRYPOINT ["./entrypoint.sh"]

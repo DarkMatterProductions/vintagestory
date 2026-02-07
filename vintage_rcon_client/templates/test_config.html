@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Config Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; }
+        h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>Configuration Test</h1>
+    <button onclick="testConfig()">Test /config Endpoint</button>
+    <div id="output"></div>
+
+    <script>
+        function testConfig() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Loading...</p>';
+
+            fetch('/config')
+                .then(response => response.json())
+                .then(config => {
+                    output.innerHTML = `
+                        <h2>Configuration Response:</h2>
+                        <pre>${JSON.stringify(config, null, 2)}</pre>
+
+                        <h2>Analysis:</h2>
+                        <ul>
+                            <li>OAuth Enabled: <strong>${config.security.oauth_enabled}</strong></li>
+                            <li>OAuth Providers: <strong>${JSON.stringify(config.security.oauth_providers)}</strong></li>
+                            <li>Traditional Login Enabled: <strong>${config.security.traditional_login_enabled}</strong></li>
+                            <li>Require Auth: <strong>${config.security.require_auth}</strong></li>
+                        </ul>
+
+                        <h2>Expected Behavior:</h2>
+                        <ul>
+                            <li>${config.security.traditional_login_enabled === false ? '✓' : '✗'} Traditional login should be hidden</li>
+                            <li>${config.security.oauth_enabled === true ? '✓' : '✗'} OAuth should be enabled</li>
+                            <li>${config.security.oauth_providers && config.security.oauth_providers.length > 0 ? '✓' : '✗'} OAuth buttons should be shown</li>
+                        </ul>
+                    `;
+                })
+                .catch(error => {
+                    output.innerHTML = `<p style="color: red;">Error: ${error}</p>`;
+                });
+        }
+
+        // Auto-run on page load
+        window.onload = testConfig;
+    </script>
+</body>
+</html>
+
