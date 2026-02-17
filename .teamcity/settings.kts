@@ -2359,10 +2359,6 @@ object RunTestsAndLinting : BuildType({
         root(HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard)
 
         cleanCheckout = true
-        branchFilter = """
-            +:refs/heads/feature/*
-            +:refs/heads/fix/*
-        """.trimIndent()
     }
 
     steps {
@@ -2438,7 +2434,6 @@ object HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard 
     branchSpec = """
         +:refs/heads/feature/*
         +:refs/heads/fix/*
-        +:refs/heads/main
     """.trimIndent()
     userNameStyle = GitVcsRoot.UserNameStyle.FULL
     userForTags = "darkmatter[bot] <noreply@darkmatter-productions.com>"
