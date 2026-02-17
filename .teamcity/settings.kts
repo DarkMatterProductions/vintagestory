@@ -1243,6 +1243,9 @@ object IntegrateRelease : BuildType({
         python {
             name = "Integrate PR"
             id = "Integrate_PR"
+            environment = pipenv {
+                arguments = "--python 3.11 pyyaml"
+            }
             command = script {
                 content = """
                     import subprocess
@@ -1498,7 +1501,7 @@ object IntegrateRelease : BuildType({
                         pass
                     
                     
-                    def get_api_version(stable):
+                    def get_vs_version(stable):
                         ${TQ}Get the Vintage Story version from the Official HTTP API.$TQ
                         url = "https://api.vintagestory.at/lateststable.txt"
                         if not stable:
@@ -1519,7 +1522,7 @@ object IntegrateRelease : BuildType({
                         token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
                         if not token:
                             print("✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set")
-                            print("  Please configure the GITHUB_TOKEN parameter in TeamCity")
+                            print("  Please configure the 'system.vcs.auth.token' parameter in TeamCity")
                             sys.exit(1)
                         return token
                     
@@ -2074,8 +2077,6 @@ object IntegrateRelease : BuildType({
                         parser = argparse.ArgumentParser(
                             description='GitHub PR Integration Script with Semantic Versioning'
                         )
-                        parser.add_argument('--name', type=str, required=True,
-                                           help='Name of the repository')
                         parser.add_argument('--pr-id', type=int, required=True,
                                            help='Pull Request ID to integrate')
                         parser.add_argument('--target-branch', type=str, default='main',
@@ -2098,7 +2099,6 @@ object IntegrateRelease : BuildType({
                         if args.dry_run:
                             print("🔍 DRY-RUN MODE ACTIVE - No tags, pushes, or merges will be performed\n")
                     
-                        print(f"Repository Name: {args.name}")
                         print(f"Pull Request: #{args.pr_id}")
                         print(f"Target Branch: {args.target_branch}\n")
                     
@@ -2144,7 +2144,7 @@ object IntegrateRelease : BuildType({
                     
                         # Step 10: Get Vintage Story version
                         if not args.vs_version:
-                            vs_version = get_api_version(stable=args.api_stable_vs_version)
+                            vs_version = get_vs_version(stable=args.api_stable_vs_version)
                         else:
                             vs_version = args.vs_version
                         print(f"\n📦 Vintage Story version: {vs_version}")
@@ -2163,12 +2163,17 @@ object IntegrateRelease : BuildType({
                             sys.exit(1)
                     
                         print(f"New version: {new_version}")
-                    
+                        
+                        
                         # Step 12: Perform rebase integration
                         perform_rebase_integration(source_branch, target_branch)
                     
-                        # Step 13: Push integrated branch and tags
-                        push_integrated_branch(target_branch, new_version)
+                        if not args.dry_run:
+                            # Step 13: Push integrated branch and tags
+                            push_integrated_branch(target_branch, new_version)
+                        else:
+                            print("\n🔍 DRY-RUN: Skipping push of integrated branch and tags")
+                            print(f"✓ Would push {target_branch} and tag {new_version} in normal mode")
                     
                         # Step 14: Output version for TeamCity and GitHub Actions
                         print(f"\n=== Build Parameters ===")
@@ -2177,17 +2182,19 @@ object IntegrateRelease : BuildType({
                         print(f"##teamcity[setParameter name='build.version.new' value='{new_version}']")
                         print(f"##teamcity[setParameter name='build.version.old' value='{current_version}']")
                         print(f"##teamcity[setParameter name='build.gameversion' value='{vs_version}']")
+                        print(f"##teamcity[setParameter name='build.dryrun' value='{args.dry_run}']")
                     
-                        print("\n=== ✓ Integration Complete ===")
+                        print(f"\n=== ✓{' Dry-Run' if args.dry_run else ''} Integration Complete ===")
                         print(f"✓ Successfully integrated PR #{args.pr_id} ({source_branch} → {target_branch})")
                         print(f"✓ Created version tag: {new_version}")
-                        print(f"✓ Pushed changes to origin")
+                        if not args.dry_run:
+                            print(f"✓ Pushed changes to origin")
                     
                     
                     if __name__ == '__main__':
                         main()
                 """.trimIndent()
-                scriptArguments = "--dry-run"
+                scriptArguments = "--dry-run --pr-id %build.pullrequest.id% --api-stable-vs-version --target-branch main"
             }
         }
     }
