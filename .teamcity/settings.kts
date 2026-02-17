@@ -1250,6 +1250,1171 @@ object IntegrateRelease : BuildType({
             }
             command = script {
                 content = """
+                    I'm using Jetbrains TeamCity. It has the VCS Auth Tokens, which are refreshable tokens that can be used in build configurations for granting access to Github. I need to be able to leverage the token id to get access to the auth token, for communicating with Github. 
+                    
+                    How can this be done within Python? I already have the TeamCuty token id being passed to it through an environment variable.
+                    
+                    12:31 PM
+                    
+                    Examined TeamCity token retrieval mechanism and identified clarifying questions needed
+                    
+                    
+                    
+                    
+                    I'd like to clarify a few things to give you the most relevant solution:
+                    
+                    Where is your Python script running?
+                    Inside a TeamCity build step?
+                    On an external server/locally that needs to call TeamCity's API?
+                    What do you currently have?
+                    Just the token ID (like the name/ID you see in TeamCity UI)?
+                    Or do you already have a TeamCity parameter reference (like %teamcity.vcs.auth.token.mytoken%)?
+                    Access to TeamCity API:
+                    Do you have TeamCity REST API credentials (username/password or personal access token)?
+                    The approach differs significantly based on these answers:
+                    
+                    If running inside TeamCity builds: You can reference tokens directly through parameters
+                    If calling from outside: You'd need to use TeamCity's REST API to retrieve token values
+                    Which scenario matches your situation?
+                    
+                    The script is running within a Python runner build step.
+                    
+                    I have manually placed the token ID into system.vcs.auth.token, which doesn't seem to populate anything automatically, so I mapped it to an environment variable. Of course it does not work.
+                    
+                    I am not currently passing any TeamCity credentials to the build step. Only the token id.
+                    
+                    12:34 PM
+                    
+                    Diagnosed token reference syntax error in TeamCity configuration
+                    
+                    
+                    
+                    
+                    
+                    
+                    Ah, I see the issue! You need to use TeamCity's parameter reference syntax to actually retrieve the token value, not just pass the ID.
+                    
+                    Here's how to fix it:
+                    
+                    In TeamCity Build Configuration
+                    Go to your build configuration → Parameters
+                    Add a new Environment Variable:
+                    Name: GITHUB_TOKEN (or whatever you prefer)
+                    Value: %teamcity.vcs.auth.token.<your-token-id>%
+                    For example, if your token ID in TeamCity is github-main-token, you'd use:
+                       %teamcity.vcs.auth.token.github-main-token%
+                    Make sure it's marked as Password (optional but recommended for security)
+                    In Your Python Script
+                    Then you can access it normally:
+                    
+                    python
+                    import os
+                    from github import Github  # or requests, etc.
+                    
+                    # Get the actual token value (not the ID)
+                    github_token = os.environ.get('GITHUB_TOKEN')
+                    
+                    if not github_token:
+                        raise ValueError("GITHUB_TOKEN environment variable not set")
+                    
+                    # Use it with GitHub
+                    g = Github(github_token)
+                    # or with requests
+                    headers = {'Authorization': f'token {github_token}'}
+                    Key Points
+                    system.vcs.auth.token doesn't automatically resolve - you need the % syntax
+                    The parameter reference %teamcity.vcs.auth.token.<token-id>% tells TeamCity to substitute the actual token value
+                    TeamCity resolves these references before passing to your build step
+                    Quick check: What's the exact token ID you see in TeamCity under Administration → VCS Auth Tokens?
+                    
+                    Am I supposed to use the token id or the token name in the value for the environment variable? The token id is an automated series of hashes and integers. The token name is one I assign.
+                    
+                    12:36 PM
+                    
+                    Investigated TeamCity token naming conventions and parameter syntax
+                    
+                    
+                    
+                    
+                    
+                    
+                    Use the token name (the one you assigned), not the auto-generated ID.
+                    
+                    Example
+                    If you created a VCS Auth Token with:
+                    
+                    Name: github-main-token
+                    ID: tc_abc123def456... (auto-generated)
+                    Your environment variable value should be:
+                    
+                    %teamcity.vcs.auth.token.github-main-token%
+                    Complete Setup
+                    TeamCity Parameters:
+                    
+                    Name: GITHUB_TOKEN
+                    Value: %teamcity.vcs.auth.token.your-token-name-here%
+                    Type: Environment variable (marked as Password)
+                    Python code:
+                    
+                    python
+                    import os
+                    
+                    github_token = os.environ.get('GITHUB_TOKEN')
+                    The token name is what TeamCity uses for the parameter reference syntax - the auto-generated ID is just for internal tracking.
+                    
+                    What name did you give your VCS Auth Token?
+                    
+                    
+                    import subprocess import os import re import requests import argparse import sys from typing import Tuple, List, Optional, Dict, Any def get_distance_from_main() -> int: ${TQ}Get the number of commits the current branch is ahead of main.$TQ try: result = subprocess.run(
+                    
+                    pasted
+                    
+                    Attached is the python script that I am using. Unfortunately it is not working. It results in the error -
+                    
+                    12:41:21     ✗ Error fetching PR details: 401 Client Error: Unauthorized for url: https://api.github.com/repos/DarkMatterProductions/vintagestory/pulls/60
+                    12:41:21       Response: {
+                    12:41:21       "message": "Bad credentials",
+                    12:41:21       "documentation_url": "https://docs.github.com/rest",
+                    12:41:21       "status": "401"
+                    12:41:21     }
+                    Show more
+                    12:44 PM
+                    
+                    Diagnosed incorrect TeamCity token configuration syntax
+                    
+                    
+                    
+                    
+                    
+                    The issue is in how you're referencing the token. Looking at your code, line 532 is trying to get SYSTEM_VCS_AUTH_TOKEN, but that's not how TeamCity parameter references work.
+                    
+                    Here's the fix:
+                    In TeamCity (Build Configuration → Parameters):
+                    Create a new Environment Variable:
+                    
+                    Name: GITHUB_TOKEN (or keep SYSTEM_VCS_AUTH_TOKEN if you prefer)
+                    Value: %teamcity.vcs.auth.token.YOUR-TOKEN-NAME-HERE%
+                    Type: Environment variable (env.)
+                    Mark as Password: ✓ (recommended)
+                    Replace YOUR-TOKEN-NAME-HERE with the actual name you gave your VCS Auth Token in TeamCity (not the auto-generated ID).
+                    
+                    In Your Python Code (line 530-537):
+                    Update the function to match your environment variable name:
+                    
+                    python
+                    def get_github_token() -> str:
+                        ${TQ}Get GitHub token from TeamCity configuration parameter.$TQ
+                        token = os.environ.get('GITHUB_TOKEN')  # Changed from SYSTEM_VCS_AUTH_TOKEN
+                        if not token:
+                            print("✗ Error: GITHUB_TOKEN environment variable not set")
+                            print("  Please configure the GITHUB_TOKEN parameter in TeamCity with value:")
+                            print("  %teamcity.vcs.auth.token.YOUR-TOKEN-NAME%")
+                            sys.exit(1)
+                        return token
+                    Why You're Getting 401:
+                    The token value you're passing is likely:
+                    
+                    The token ID (the hash string) instead of the actual token value
+                    Or it's not being resolved at all (empty or contains the literal string instead of the token)
+                    The %teamcity.vcs.auth.token.TOKEN_NAME% syntax tells TeamCity to substitute the actual OAuth token value at runtime, which is what GitHub's API needs.
+                    
+                    What's your VCS Auth Token name in TeamCity? I can give you the exact parameter value to use.
+                    
+                    You are working from an incorrect premise. The script above is the python code. The environment variable SYSTEM_VCS_AUTH_TOKEN is configured in the build configuration as -
+                    
+                    Name: env.SYSTEM_VCS_AUTH_TOKEN
+                    Kind: Environment Variable
+                    Value Type: Password
+                    Value: %teamcity.vcs.auth.token.Integrate-and-Release%
+                    
+                    This matches the described configuration, except I am using SYSTEM_VCS_AUTH_TOKEN instead of GITHUB_TOKEN.
+                    
+                    12:48 PM
+                    
+                    Investigated token resolution and identified potential configuration mismatches
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    Ah, I apologize for misunderstanding! Your configuration looks correct. The issue is likely one of these:
+                    
+                    Debugging Steps:
+                    1. Verify the token is actually resolving
+                    Add this debug line temporarily after line 537 in your script:
+                    
+                    python
+                    def get_github_token() -> str:
+                        ${TQ}Get GitHub token from TeamCity configuration parameter.$TQ
+                        token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
+                        if not token:
+                            print("✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set")
+                            print("  Please configure the 'system.vcs.auth.token' parameter in TeamCity")
+                            sys.exit(1)
+                        
+                        # Debug: Check if token is resolving
+                        print(f"🔍 Token length: {len(token)} characters")
+                        print(f"🔍 Token prefix: {token[:7]}..." if len(token) > 7 else f"🔍 Full token: {token}")
+                        
+                        return token
+                    This will show you:
+                    
+                    If the token is empty
+                    If it's still the literal string %teamcity.vcs.auth.token.Integrate-and-Release% (not resolved)
+                    If it looks like a valid token (starts with ghp_ or gho_)
+                    2. Double-check the exact token name
+                    In TeamCity, go to Administration → VCS Auth Tokens and verify:
+                    
+                    The exact name is Integrate-and-Release (case-sensitive, no extra spaces)
+                    The token shows as valid/connected to GitHub
+                    3. Verify token permissions
+                    The VCS Auth Token needs these GitHub scopes for your script:
+                    
+                    repo (full repository access)
+                    read:org (if accessing organization repos)
+                    Check if the token has these scopes in TeamCity's VCS Auth Tokens page.
+                    
+                    What do you see when you add that debug output?
+                    
+                    It is valid and the name is correct. I am actually using it in other places on the build configuration. That is how I know it works. 
+                    
+                    The problem is that it is not actually replacing the value in the environment variable. The debug prints had:  Token prefix: %teamci..., which shows the variable.
+                    
+                    12:58 PM
+                    
+                    Diagnosed parameter resolution failure in TeamCity environment variables
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    Ah! The parameter reference isn't being resolved - it's passing the literal string. This is the actual issue.
+                    
+                    The Problem:
+                    TeamCity isn't resolving %teamcity.vcs.auth.token.Integrate-and-Release% when it's inside a Password-type environment variable. This can happen with certain parameter types or contexts.
+                    
+                    Solution - Try These Approaches:
+                    Option 1: Use a System Parameter (Recommended)
+                    Instead of env.SYSTEM_VCS_AUTH_TOKEN, create:
+                    
+                    Name: system.vcs.auth.token
+                    Kind: System property
+                    Value Type: Password
+                    Value: %teamcity.vcs.auth.token.Integrate-and-Release%
+                    
+                    Then in your Python script, change to:
+                    
+                    python
+                    token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
+                    TeamCity exposes system.* parameters as environment variables with SYSTEM_ prefix.
+                    
+                    Option 2: Use Configuration Parameter as Intermediary
+                    Create two parameters:
+                    
+                    Parameter 1:
+                    Name: github.token
+                    Kind: Configuration parameter
+                    Value: %teamcity.vcs.auth.token.Integrate-and-Release%
+                    
+                    Parameter 2:
+                    Name: env.GITHUB_TOKEN
+                    Kind: Environment variable
+                    Value Type: Password
+                    Value: %github.token%
+                    
+                    Option 3: Reference Directly in Build Step
+                    In your Python runner build step, add an environment variable directly:
+                    
+                    Name: GITHUB_TOKEN
+                    Value: %teamcity.vcs.auth.token.Integrate-and-Release%
+                    Sometimes build step-level env vars resolve better than configuration-level ones.
+                    
+                    Try Option 1 first - system parameters typically have the best resolution behavior. What happens with that approach?
+                    
+                    So far, option 1 has failed with the error -
+                    
+                    13:03:10     ✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set
+                    13:03:10       Please configure the 'system.vcs.auth.token' parameter in TeamCity
+                    Option 2 results in the parameter configuration demanding that I set teamcity.vcs.auth.token.Integrate-and-Release
+                    
+                    1:13 PM
+                    
+                    Diagnosed naming convention mismatches and explored alternative configuration approaches
+                    
+                    
+                    
+                    
+                    
+                    Ah, I see the issues:
+                    
+                    Option 1: The parameter name system.vcs.auth.token doesn't automatically become SYSTEM_VCS_AUTH_TOKEN. Let's fix the naming.
+                    
+                    Option 2: TeamCity thinks it's a circular reference because of how the parameters are structured.
+                    
+                    Let's Fix Option 1:
+                    Change the parameter name to match what your Python code expects:
+                    
+                    Name: system.vcs.auth.token → system.SYSTEM_VCS_AUTH_TOKEN
+                    Kind: System property
+                    Value Type: Password
+                    Value: %teamcity.vcs.auth.token.Integrate-and-Release%
+                    
+                    TeamCity will expose system.SYSTEM_VCS_AUTH_TOKEN as the environment variable SYSTEM_VCS_AUTH_TOKEN.
+                    
+                    OR Try Option 3:
+                    In your Python runner build step specifically (not the build configuration parameters):
+                    
+                    Edit the Python build step
+                    Find the Environment variables section in the step
+                    Add:
+                    Name: SYSTEM_VCS_AUTH_TOKEN
+                    Value: %teamcity.vcs.auth.token.Integrate-and-Release%
+                    Important Question:
+                    You mentioned you're using this token successfully "in other places on the build configuration". How are you referencing it there? (VCS root? Another build step? Script?) If we see how it works there, we can replicate that exact approach.
+                    
+                    In the other builds steps, they are native runners that can call the auth token as part of TeamCity. 
+                    
+                    I changed Option 1 to match the 'Fixed' version, but it still failed with -
+                    
+                    13:22:28     ✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set
+                    13:22:28       Please configure the 'system.vcs.auth.token' parameter in TeamCity
+                    Option 3 results in the error: teamcity.vcs.auth.token.Integrate-and-Release must have a value (referenced in Build step: Integrate PR) and prevents it from finding a compatible agent.
+                    
+                    TeamCity is not resolving %teamcity.vcs.auth.token.Integrate-and-Release% automatically to the VCS Auth Tokens anywhere.
+                    
+                    Show more
+                    1:30 PM
+                    
+                    Diagnosed VCS token exposure limitation and contemplated alternative solutions
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    Ah, now I understand the core issue!
+                    
+                    The problem: teamcity.vcs.auth.token.* references are special - they only work in specific TeamCity contexts (VCS roots, native runners with built-in GitHub support). They're not regular parameters that can be referenced anywhere with %...% syntax.
+                    
+                    TeamCity intentionally doesn't expose VCS Auth Tokens to custom scripts through parameter resolution for security reasons.
+                    
+                    Working Solutions:
+                    Option A: Create a Separate GitHub Personal Access Token (Recommended)
+                    In GitHub: Create a Personal Access Token with repo scope
+                    In TeamCity: Add it as a regular parameter:
+                    Name: env.GITHUB_TOKEN
+                    Kind: Environment variable
+                    Value Type: Password
+                    Value: <paste the actual GitHub token>
+                    This will work immediately since it's a regular password parameter.
+                    
+                    Option B: Use TeamCity's REST API (More Complex)
+                    If you must use the VCS Auth Token, you'd need to:
+                    
+                    Give your build access to TeamCity's REST API
+                    Use the REST API to fetch the token value at runtime
+                    This requires additional TeamCity credentials
+                    Option C: Use a Workaround with VCS Checkout
+                    Some users configure their VCS root to use the auth token, then extract it from git credentials, but this is fragile and not recommended.
+                    
+                    My recommendation: Go with Option A. Create a dedicated GitHub PAT for this automation script. The VCS Auth Tokens are designed for TeamCity's internal use, not for exposure to build scripts.
+                    
+                    Would you like help setting up Option A?
+                    
+                    No. I can setup Option A. I wanted to leverage the temporary VCS auth tokens, because it is more secure that a static PAT. 
+                    
+                    Before I set up the static PAT for this setup, are there no options for a dynamic credential process for temporary tokens?
+                    
+                    1:32 PM
+                    
+                    Examined dynamic credential alternatives to static PATs
+                    
+                    
+                    
+                    
+                    
+                    Good question! There are a few options for dynamic/temporary credentials:
+                    
+                    Option 1: GitHub App with Installation Tokens (Best Alternative)
+                    Instead of a PAT, use a GitHub App:
+                    
+                    Create a GitHub App in your org/repo settings
+                    Install it on your repository
+                    In your Python script, generate short-lived installation tokens (valid for 1 hour):
+                    python
+                    import jwt
+                    import time
+                    import requests
+                    
+                    def get_github_app_token(app_id: str, private_key: str, installation_id: str) -> str:
+                        ${TQ}Generate a short-lived GitHub App installation token (1 hour validity).$TQ
+                        
+                        # Create JWT
+                        payload = {
+                            'iat': int(time.time()),
+                            'exp': int(time.time()) + 600,  # 10 min
+                            'iss': app_id
+                        }
+                        jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                        
+                        # Get installation token
+                        headers = {
+                            'Authorization': f'Bearer {jwt_token}',
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                        response = requests.post(
+                            f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+                            headers=headers
+                        )
+                        return response.json()['token']
+                    Store in TeamCity:
+                    
+                    env.GITHUB_APP_ID
+                    env.GITHUB_APP_PRIVATE_KEY (password)
+                    env.GITHUB_APP_INSTALLATION_ID
+                    Advantages:
+                    
+                    Tokens expire in 1 hour
+                    Fine-grained permissions
+                    Better audit trail
+                    Option 2: TeamCity REST API (Hacky)
+                    Access the VCS Auth Token via TeamCity's API from within the build:
+                    
+                    python
+                    def get_vcs_token_via_api():
+                        tc_url = os.environ.get('TEAMCITY_URL')  # Automatically available
+                        tc_token = os.environ.get('TEAMCITY_API_TOKEN')  # You'd need to add this
+                        
+                        # Call TeamCity API to get VCS root details
+                        # This is complex and requires knowing VCS root IDs
+                    Downsides: Requires exposing TeamCity API credentials, complex setup
+                    
+                    Option 3: OIDC Token Exchange (If Available)
+                    Check if your TeamCity version supports OIDC - some newer versions might allow workload identity federation with GitHub.
+                    
+                    My Recommendation: GitHub App (Option 1) is the industry-standard approach for temporary credentials. It's what GitHub Actions uses internally, and it's more secure than static PATs while being actually accessible from scripts.
+                    
+                    Would you like help setting up the GitHub App approach?
+                    
+                    I am absolutely on board with using Option 1. I already have the Github App integration in place for TeamCity. That is what Team City is using for generating the VCS Auth Tokens. 
+                    
+                    Is there a way we can also use the Github App permissions within the script for handling local git commands for merging, rebasing, tagging and pushing branches from the local checkout to Github?
+                    
+                    1:35 PM
+                    
+                    Architected solution leveraging existing GitHub App credentials for local git operations
+                    
+                    
+                    
+                    
+                    
+                    Absolutely! Since TeamCity is already using the GitHub App, you can leverage the same App credentials in your script.
+                    
+                    Here's how to set it up:
+                    1. Extract GitHub App Credentials from TeamCity
+                    You need to add these as TeamCity parameters (they're likely already configured somewhere in TeamCity, you just need to expose them):
+                    
+                    Build Configuration → Parameters:
+                    
+                    env.GITHUB_APP_ID = <your-app-id>
+                    env.GITHUB_APP_INSTALLATION_ID = <your-installation-id>
+                    env.GITHUB_APP_PRIVATE_KEY = <your-private-key-pem> (Password type)
+                    To find these values:
+                    
+                    App ID: GitHub → Settings → Developer settings → GitHub Apps → Your App
+                    Installation ID: Install the app, then check the URL or use API
+                    Private Key: Generate/download from GitHub App settings
+                    2. Update Your Python Script
+                    Replace the get_github_token() function with this:
+                    
+                    python
+                    import jwt
+                    import time
+                    
+                    def get_github_app_installation_token() -> str:
+                        $TQ
+                        Generate a GitHub App installation token (valid for 1 hour).
+                        Uses GitHub App credentials from TeamCity environment variables.
+                        $TQ
+                        app_id = os.environ.get('GITHUB_APP_ID')
+                        private_key = os.environ.get('GITHUB_APP_PRIVATE_KEY')
+                        installation_id = os.environ.get('GITHUB_APP_INSTALLATION_ID')
+                        
+                        if not all([app_id, private_key, installation_id]):
+                            print("✗ Error: GitHub App credentials not configured")
+                            print("  Required environment variables:")
+                            print("  - GITHUB_APP_ID")
+                            print("  - GITHUB_APP_PRIVATE_KEY")
+                            print("  - GITHUB_APP_INSTALLATION_ID")
+                            sys.exit(1)
+                        
+                        try:
+                            # Create JWT for GitHub App authentication
+                            now = int(time.time())
+                            payload = {
+                                'iat': now,
+                                'exp': now + 600,  # JWT expires in 10 minutes
+                                'iss': app_id
+                            }
+                            
+                            jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                            
+                            # Exchange JWT for installation token
+                            headers = {
+                                'Authorization': f'Bearer {jwt_token}',
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                            
+                            print(f"🔐 Requesting GitHub App installation token...")
+                            response = requests.post(
+                                f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+                                headers=headers
+                            )
+                            response.raise_for_status()
+                            
+                            token_data = response.json()
+                            token = token_data['token']
+                            expires_at = token_data['expires_at']
+                            
+                            print(f"✓ Generated installation token (expires: {expires_at})")
+                            return token
+                            
+                        except Exception as e:
+                            print(f"✗ Error generating GitHub App token: {e}")
+                            sys.exit(1)
+                    3. Configure Git to Use the Token
+                    Add this function to configure git with the installation token:
+                    
+                    python
+                    def configure_git_credentials(token: str, owner: str, repo: str) -> None:
+                        $TQ
+                        Configure git to use the GitHub App installation token for authentication.
+                        $TQ
+                        print(f"\n=== Configuring Git Credentials ===")
+                        
+                        try:
+                            # Set up git credential helper with the token
+                            # Option 1: Update the remote URL to include token
+                            remote_url = f'https://x-access-token:{token}@github.com/{owner}/{repo}.git'
+                            
+                            subprocess.run(
+                                ['git', 'remote', 'set-url', 'origin', remote_url],
+                                check=True,
+                                capture_output=True
+                            )
+                            print(f"✓ Configured git remote with installation token")
+                            
+                            # Configure git user for commits/tags (use GitHub App bot)
+                            subprocess.run(
+                                ['git', 'config', 'user.name', 'github-actions[bot]'],
+                                check=True,
+                                capture_output=True
+                            )
+                            subprocess.run(
+                                ['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
+                                check=True,
+                                capture_output=True
+                            )
+                            print(f"✓ Configured git user identity")
+                            
+                        except subprocess.CalledProcessError as e:
+                            print(f"✗ Error configuring git credentials: {e}")
+                            sys.exit(1)
+                    4. Update Your main() Function
+                    Replace line 805 with:
+                    
+                    python
+                    def main():
+                        # ... existing code ...
+                        
+                        # Step 1: Get GitHub App installation token
+                        token = get_github_app_installation_token()
+                        
+                        # Step 2: Parse repository from git remote
+                        owner, repo = parse_repo_from_git_remote()
+                        
+                        # Step 3: Configure git to use the token
+                        configure_git_credentials(token, owner, repo)
+                        
+                        # ... rest of your existing code ...
+                    5. Add Required Dependency
+                    Add to your requirements or install:
+                    
+                    bash
+                    pip install PyJWT cryptography
+                    Benefits:
+                    ✅ Temporary tokens (1 hour expiry)
+                    ✅ No static PATs needed
+                    ✅ Same permissions TeamCity already has
+                    ✅ Works with all git operations (fetch, push, tag)
+                    ✅ Audit trail through GitHub App
+                    
+                    Finding Your Installation ID:
+                    If you don't know your installation ID:
+                    
+                    python
+                    def get_installation_id(app_id: str, private_key: str, owner: str) -> str:
+                        ${TQ}Find installation ID for a given org/user.$TQ
+                        now = int(time.time())
+                        payload = {'iat': now, 'exp': now + 600, 'iss': app_id}
+                        jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                        
+                        headers = {
+                            'Authorization': f'Bearer {jwt_token}',
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                        
+                        response = requests.get(
+                            f'https://api.github.com/app/installations',
+                            headers=headers
+                        )
+                        
+                        for installation in response.json():
+                            if installation['account']['login'] == owner:
+                                return str(installation['id'])
+                        
+                        raise Exception(f"No installation found for {owner}")
+                    Would you like help extracting the GitHub App credentials from your existing TeamCity setup?
+                    
+                    I'm not clear where I get GITHUB_APP_INSTALLATION_ID. Is that somewhere in TeamCity? Or is it in Github?
+                    
+                    1:43 PM
+                    
+                    Clarified GitHub App installation ID origins and retrieval methods
+                    
+                    
+                    
+                    
+                    The GITHUB_APP_INSTALLATION_ID is in GitHub, but there are a few ways to get it:
+                    
+                    Method 1: From GitHub URL (Easiest)
+                    Go to your GitHub organization settings (or user settings if personal)
+                    Navigate to: Settings → GitHub Apps → (Your App Name)
+                    Or go to: Settings → Installations → Configure (next to your app)
+                    Look at the URL - it will be something like:
+                       https://github.com/settings/installations/12345678
+                    The number at the end (12345678) is your Installation ID
+                    
+                    Method 2: From TeamCity Configuration (If Exposed)
+                    Check if TeamCity stores it:
+                    
+                    Go to TeamCity → Administration → Connections
+                    Find your GitHub App connection
+                    Look for any "Installation ID" field (TeamCity might display it, but it's not guaranteed)
+                    Method 3: Use the API to Find It (Programmatic)
+                    Add this helper function to your script to auto-discover it:
+                    
+                    python
+                    def get_github_app_installation_id(app_id: str, private_key: str, owner: str) -> str:
+                        $TQ
+                        Find the installation ID for a GitHub App installed on an organization/user.
+                        
+                        Args:
+                            app_id: GitHub App ID
+                            private_key: GitHub App private key (PEM format)
+                            owner: GitHub organization or user name
+                        
+                        Returns:
+                            Installation ID as a string
+                        $TQ
+                        import jwt
+                        import time
+                        
+                        # Create JWT
+                        now = int(time.time())
+                        payload = {
+                            'iat': now,
+                            'exp': now + 600,
+                            'iss': app_id
+                        }
+                        
+                        jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                        
+                        # List all installations for this app
+                        headers = {
+                            'Authorization': f'Bearer {jwt_token}',
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                        
+                        print(f"🔍 Looking up installation ID for {owner}...")
+                        response = requests.get(
+                            'https://api.github.com/app/installations',
+                            headers=headers
+                        )
+                        response.raise_for_status()
+                        
+                        installations = response.json()
+                        
+                        for installation in installations:
+                            account = installation.get('account', {})
+                            if account.get('login') == owner:
+                                installation_id = str(installation['id'])
+                                print(f"✓ Found installation ID: {installation_id}")
+                                return installation_id
+                        
+                        print(f"✗ No installation found for {owner}")
+                        print(f"Available installations:")
+                        for inst in installations:
+                            print(f"  - {inst['account']['login']} (ID: {inst['id']})")
+                        sys.exit(1)
+                    Then update your token function:
+                    
+                    python
+                    def get_github_app_installation_token(owner: str) -> str:
+                        ${TQ}Generate a GitHub App installation token.$TQ
+                        app_id = os.environ.get('GITHUB_APP_ID')
+                        private_key = os.environ.get('GITHUB_APP_PRIVATE_KEY')
+                        installation_id = os.environ.get('GITHUB_APP_INSTALLATION_ID')  # Optional now
+                        
+                        if not all([app_id, private_key]):
+                            print("✗ Error: GitHub App credentials not configured")
+                            sys.exit(1)
+                        
+                        # Auto-discover installation ID if not provided
+                        if not installation_id:
+                            print("⚠ GITHUB_APP_INSTALLATION_ID not set, auto-discovering...")
+                            installation_id = get_github_app_installation_id(app_id, private_key, owner)
+                        
+                        # ... rest of token generation ...
+                    Recommended Approach:
+                    Use Method 1 to manually find the Installation ID from GitHub UI
+                    Add it to TeamCity as a parameter: env.GITHUB_APP_INSTALLATION_ID
+                    Or use Method 3 to auto-discover it at runtime (slightly slower but more flexible)
+                    Which method would you prefer?
+                    
+                    
+                    import subprocess import os import re import requests import argparse import sys from typing import Tuple, List, Optional, Dict, Any def get_distance_from_main() -> int: ${TQ}Get the number of commits the current branch is ahead of main.$TQ try: result = subprocess.run(
+                    
+                    pasted
+                    
+                    Ok. got it. 
+                    
+                    Can you please replace get_github_token() with the code for using these new environment variables. Please make sure that it will work with the local git cli commands that run in subprocess as well.
+                    
+                    1:47 PM
+                    
+                    Architected GitHub App authentication with git CLI subprocess integration
+                    
+                    
+                    
+                    Here's the updated code to replace the get_github_token() function and add git credential configuration:
+                    
+                    python
+                    import jwt
+                    import time
+                    
+                    def get_github_app_installation_token() -> str:
+                        $TQ
+                        Generate a GitHub App installation token (valid for 1 hour).
+                        Uses GitHub App credentials from TeamCity environment variables.
+                        $TQ
+                        app_id = os.environ.get('GITHUB_APP_ID')
+                        private_key = os.environ.get('GITHUB_APP_PRIVATE_KEY')
+                        installation_id = os.environ.get('GITHUB_APP_INSTALLATION_ID')
+                        
+                        if not all([app_id, private_key, installation_id]):
+                            print("✗ Error: GitHub App credentials not configured")
+                            print("  Required environment variables:")
+                            print("  - GITHUB_APP_ID")
+                            print("  - GITHUB_APP_PRIVATE_KEY")
+                            print("  - GITHUB_APP_INSTALLATION_ID")
+                            sys.exit(1)
+                        
+                        try:
+                            # Create JWT for GitHub App authentication
+                            now = int(time.time())
+                            payload = {
+                                'iat': now,
+                                'exp': now + 600,  # JWT expires in 10 minutes
+                                'iss': app_id
+                            }
+                            
+                            print(f"🔐 Generating GitHub App JWT...")
+                            jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                            
+                            # Exchange JWT for installation token
+                            headers = {
+                                'Authorization': f'Bearer {jwt_token}',
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                            
+                            print(f"🔐 Requesting GitHub App installation token...")
+                            response = requests.post(
+                                f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+                                headers=headers
+                            )
+                            response.raise_for_status()
+                            
+                            token_data = response.json()
+                            token = token_data['token']
+                            expires_at = token_data['expires_at']
+                            
+                            print(f"✓ Generated installation token (expires: {expires_at})")
+                            return token
+                            
+                        except requests.RequestException as e:
+                            print(f"✗ Error generating GitHub App token: {e}")
+                            if hasattr(e, 'response') and e.response is not None:
+                                print(f"  Response: {e.response.text}")
+                            sys.exit(1)
+                        except Exception as e:
+                            print(f"✗ Error generating GitHub App token: {e}")
+                            sys.exit(1)
+                    
+                    
+                    def configure_git_credentials(token: str, owner: str, repo: str) -> None:
+                        $TQ
+                        Configure git to use the GitHub App installation token for authentication.
+                        This allows git push, fetch, and other operations to work with the temporary token.
+                        $TQ
+                        print(f"\n=== Configuring Git Credentials ===")
+                        
+                        try:
+                            # Update the remote URL to include the token
+                            # Format: https://x-access-token:TOKEN@github.com/owner/repo.git
+                            remote_url = f'https://x-access-token:{token}@github.com/{owner}/{repo}.git'
+                            
+                            subprocess.run(
+                                ['git', 'remote', 'set-url', 'origin', remote_url],
+                                check=True,
+                                capture_output=True
+                            )
+                            print(f"✓ Configured git remote with installation token")
+                            
+                            # Configure git user for commits/tags
+                            # Using GitHub Actions bot identity
+                            subprocess.run(
+                                ['git', 'config', 'user.name', 'github-actions[bot]'],
+                                check=True,
+                                capture_output=True
+                            )
+                            subprocess.run(
+                                ['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
+                                check=True,
+                                capture_output=True
+                            )
+                            print(f"✓ Configured git user identity")
+                            
+                        except subprocess.CalledProcessError as e:
+                            print(f"✗ Error configuring git credentials: {e}")
+                            if e.stderr:
+                                print(f"  {e.stderr.decode()}")
+                            sys.exit(1)
+                    And update the main() function - replace lines 805-816 with:
+                    
+                    python
+                    def main():
+                        ${TQ}Main integration workflow.$TQ
+                        # Setup argument parser
+                        parser = argparse.ArgumentParser(
+                            description='GitHub PR Integration Script with Semantic Versioning'
+                        )
+                        parser.add_argument('--pr-id', type=int, required=True,
+                                           help='Pull Request ID to integrate')
+                        parser.add_argument('--target-branch', type=str, default='main',
+                                           help='Target branch to integrate into (default: main)')
+                        parser.add_argument('--dry-run', action='store_true',
+                                            help='Perform a dry run without creating tags or releases')
+                        vs_version_group = parser.add_mutually_exclusive_group(required=True)
+                        vs_version_group.add_argument('--vs-version', type=str, default=None,
+                                            help='Vintage Story version to build for (Default: 1.21.6)')
+                        vs_version_group.add_argument('--api-stable-vs-version', action='store_true',
+                                            help='Use Vintage Story version from the latest stable API release')
+                        vs_version_group.add_argument('--api-unstable-vs-version', action='store_true',
+                                            help='Use Vintage Story version from the latest unstable API release')
+                    
+                        args = parser.parse_args()
+                    
+                        print("=== GitHub PR Integration Script ===\n")
+                    
+                        # Check if dry-run mode is active
+                        if args.dry_run:
+                            print("🔍 DRY-RUN MODE ACTIVE - No tags, pushes, or merges will be performed\n")
+                    
+                        print(f"Pull Request: #{args.pr_id}")
+                        print(f"Target Branch: {args.target_branch}\n")
+                    
+                        # Step 1: Generate GitHub App installation token
+                        token = get_github_app_installation_token()
+                    
+                        # Step 2: Parse repository from git remote
+                        owner, repo = parse_repo_from_git_remote()
+                    
+                        # Step 3: Configure git credentials with the token
+                        configure_git_credentials(token, owner, repo)
+                    
+                        # Step 4: Get PR details from GitHub API
+                        pr_data = get_pr_details(owner, repo, args.pr_id, token)
+                        source_branch = pr_data['head']['ref']
+                        target_branch = args.target_branch
+                    
+                        print(f"📋 Source Branch: {source_branch}")
+                        print(f"📋 Target Branch: {target_branch}")
+                    
+                        # Continue with rest of the function...
+                    Also add this to your imports at the top:
+                    
+                    python
+                    import jwt
+                    import time
+                    And add to your requirements.txt or install:
+                    
+                    bash
+                    pip install PyJWT cryptography
+                    Summary of changes:
+                    
+                    ✅ Replaced get_github_token() with get_github_app_installation_token()
+                    ✅ Added configure_git_credentials() to update git remote URL with token
+                    ✅ Token is configured for ALL git CLI commands (fetch, push, rebase, tag, etc.)
+                    ✅ Uses temporary 1-hour tokens from GitHub App
+                    ✅ Works with your existing subprocess git commands
+                    The token will now be embedded in the git remote URL, so all your existing subprocess.run(['git', ...]) commands will automatically authenticate!
+                    
+                    Please update the script to contain those sections. Make sure you do not change any other code, except what is required to make that change work.
+                    
+                    1:48 PM
+                    
+                    Verified file creation and catalogued modifications
+                    
+                    
+                    
+                    
+                    
+                    
+                    Perfect! I've updated your script with the GitHub App authentication. Here's what changed:
+                    
+                    Changes Made:
+                    Added imports (lines 7-8):
+                    import jwt
+                    import time
+                    Replaced get_github_token() with get_github_app_installation_token() (lines 264-316):
+                    Reads GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_APP_INSTALLATION_ID from environment
+                    Creates a JWT token
+                    Exchanges it for a 1-hour GitHub App installation token
+                    Added configure_git_credentials() function (lines 319-353):
+                    Updates git remote URL with the token: https://x-access-token:TOKEN@github.com/owner/repo.git
+                    Configures git user identity for commits/tags
+                    This ensures all git subprocess commands (fetch, push, rebase, tag) authenticate automatically
+                    Updated main() function:
+                    Step 1: Changed to call get_github_app_installation_token()
+                    Step 3: Added call to configure_git_credentials(token, owner, repo)
+                    Renumbered subsequent steps (4-15)
+                    What You Need to Do in TeamCity:
+                    Add these environment variables to your build configuration:
+                    
+                    env.GITHUB_APP_ID = <your-app-id>
+                    env.GITHUB_APP_INSTALLATION_ID = <installation-id>
+                    env.GITHUB_APP_PRIVATE_KEY = <private-key-pem> (mark as Password)
+                    Install Required Python Packages:
+                    bash
+                    pip install PyJWT cryptography requests
+                    The script will now use temporary 1-hour tokens from your GitHub App, and all git operations will authenticate automatically!
+                    
+                    Integrate pr
+                    PY 
+                    How does this use GITHUB_APP_PRIVATE_KEY to allow the git cli tool to communicate with Github?
+                    
+                    2:32 PM
+                    
+                    Traced private key's indirect role in git authentication flow
+                    
+                    
+                    
+                    
+                    Great question! The GITHUB_APP_PRIVATE_KEY doesn't directly communicate with GitHub for git operations. Here's the flow:
+                    
+                    Authentication Flow:
+                    GITHUB_APP_PRIVATE_KEY (PEM format)
+                             ↓
+                        Creates JWT Token (signed with private key)
+                             ↓
+                        Sends JWT to GitHub API
+                             ↓
+                        GitHub returns Installation Token (1-hour lived access token)
+                             ↓
+                        Installation Token embedded in git remote URL
+                             ↓
+                        Git CLI uses the Installation Token for all operations
+                    Specifically in the code:
+                    Step 1: Private Key → JWT Token
+                    python
+                    # In get_github_app_installation_token()
+                    jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                    # This creates a signed JWT that proves we own the GitHub App
+                    Step 2: JWT → Installation Token
+                    python
+                    # Exchange JWT for installation token via GitHub API
+                    response = requests.post(
+                        f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+                        headers={'Authorization': f'Bearer {jwt_token}'}
+                    )
+                    token = response.json()['token']  # This is what git will use
+                    Step 3: Installation Token → Git Remote URL
+                    python
+                    # In configure_git_credentials()
+                    remote_url = f'https://x-access-token:{token}@github.com/{owner}/{repo}.git'
+                    subprocess.run(['git', 'remote', 'set-url', 'origin', remote_url])
+                    ```
+                    
+                    ## What Git Actually Sees:
+                    
+                    When git runs commands like `git push origin main`, it sees the remote URL as:
+                    ```
+                    https://x-access-token:ghs_abc123xyz...@github.com/owner/repo.git
+                    The ghs_abc123xyz... part is the installation token (not the private key). Git sends this token in HTTP Basic Auth to GitHub with each request.
+                    
+                    Summary:
+                    Private Key: Only used by Python to create the JWT
+                    JWT: Only used to request the installation token from GitHub's API
+                    Installation Token: This is what git CLI actually uses for authentication
+                    Git: Never sees the private key, only the installation token in the URL
+                    The private key stays in Python memory and is never exposed to git commands. Does that clarify the flow?
+                    
+                    The script fails with 
+                    
+                    14:43:42     🔐 Generating GitHub App JWT...
+                    14:43:42     ✗ Error generating GitHub App token: module 'jwt' has no attribute 'encode'
+                    2:45 PM
+                    
+                    Diagnosed package conflict and formulated installation solution
+                    
+                    
+                    
+                    
+                    
+                    The issue is that you have the wrong jwt package installed. There are two different packages:
+                    
+                    jwt (wrong one - doesn't have encode)
+                    PyJWT (correct one - has encode)
+                    Fix:
+                    Option 1: Install the correct package
+                    
+                    In your TeamCity build step (before running the Python script), add:
+                    
+                    bash
+                    pip uninstall -y jwt
+                    pip install PyJWT cryptography
+                    Option 2: Update the import to be explicit
+                    
+                    Change the import at the top of the script:
+                    
+                    python
+                    # Instead of: import jwt
+                    import jwt as pyjwt  # or
+                    from jwt import encode as jwt_encode
+                    Then update the encode call:
+                    
+                    python
+                    jwt_token = pyjwt.encode(payload, private_key, algorithm='RS256')
+                    # or
+                    jwt_token = jwt_encode(payload, private_key, algorithm='RS256')
+                    Option 3: Add a check in the script
+                    
+                    I can update the script to detect and give a better error message:
+                    
+                    python
+                    try:
+                        import jwt
+                        # Verify it's PyJWT, not the jwt package
+                        if not hasattr(jwt, 'encode'):
+                            print("✗ Error: Wrong 'jwt' package installed")
+                            print("  Please run: pip uninstall jwt && pip install PyJWT")
+                            sys.exit(1)
+                    except ImportError:
+                        print("✗ Error: PyJWT not installed")
+                        print("  Please run: pip install PyJWT cryptography")
+                        sys.exit(1)
+                    I recommend Option 1 - just make sure PyJWT is installed instead of jwt.
+                    
+                    Would you like me to update the script with Option 3 to give a better error message if the wrong package is detected?
+                    
+                    installing pyjwt fixed that issue. The only remaining issue is that I am getting the error -
+                    
+                        if not all_issues:
+                            print(f"✗ Error: PR #{pr_number} is not associated with any issues")
+                            print("  PRs must reference issues using keywords like 'fixes #123' or be linked to issues")
+                            print("  Recognized keywords: close, closes, closed, fix, fixes, fixed, resolve, resolves, resolved")
+                            sys.exit(1)
+                    which means that it is scanning the PR body, not not checking of the PR is linked to issues.
+                    
+                    Show more
+                    3:07 PM
+                    
+                    Investigated API limitations and pivoted toward GraphQL solution
+                    
+                    
+                    
+                    
+                    
+                    The timeline API approach isn't reliably detecting linked issues. Let's use GitHub's GraphQL API instead, which has better support for this.
+                    
+                    Here's the updated get_linked_issues() function:
+                    
+                    
+                    Prepared to clarify the issue detection mechanism discrepancy
+                    
+                    
+                    Perfect! I've updated the get_linked_issues() function to use GitHub's GraphQL API, which is much more reliable for detecting linked issues.
+                    
+                    What Changed:
+                    The new function uses GraphQL to query closingIssuesReferences, which GitHub automatically tracks when:
+                    
+                    A PR body/comment contains keywords like "fixes #123", "closes #456"
+                    Issues are manually linked to the PR through GitHub's UI
+                    Why GraphQL is Better:
+                    More reliable: GitHub's GraphQL API explicitly tracks closing references
+                    Comprehensive: Captures both keyword references AND manually linked issues
+                    Standardized: Uses GitHub's built-in linking system
+                    The GraphQL Query:
+                    graphql
+                    query {
+                      repository(owner: "owner", name: "repo") {
+                        pullRequest(number: 60) {
+                          closingIssuesReferences(first: 10) {
+                            nodes {
+                              number
+                            }
+                          }
+                        }
+                      }
+                    }
+                    This directly asks GitHub "what issues will this PR close?"
+                    
+                    Testing:
+                    Try running the script again. It should now properly detect:
+                    
+                    Issues referenced with keywords in PR body (fixes #123, closes #456, etc.)
+                    Issues manually linked through GitHub's "Development" sidebar
+                    Issues linked in PR comments
+                    If it still doesn't find linked issues, you may need to either:
+                    
+                    Add a keyword reference to the PR body (e.g., "Fixes #123")
+                    Manually link an issue via GitHub's UI
+                    Or we can make this validation optional if your workflow doesn't require it
+                    Does it work now?
+                    
+                    Integrate pr
+                    PY 
+                    
+                    
+                    
+                    
+                    Claude is AI and can make mistakes. Please double-check responses.
+                    Integrate pr · PY
+                    Copy
+                    
                     import subprocess
                     import os
                     import re
@@ -1529,7 +2694,7 @@ object IntegrateRelease : BuildType({
                         app_id = os.environ.get('GITHUB_APP_ID')
                         private_key = os.environ.get('GITHUB_APP_PRIVATE_KEY')
                         installation_id = os.environ.get('GITHUB_APP_INSTALLATION_ID')
-                    
+                        
                         if not all([app_id, private_key, installation_id]):
                             print("✗ Error: GitHub App credentials not configured")
                             print("  Required environment variables:")
@@ -1537,7 +2702,7 @@ object IntegrateRelease : BuildType({
                             print("  - GITHUB_APP_PRIVATE_KEY")
                             print("  - GITHUB_APP_INSTALLATION_ID")
                             sys.exit(1)
-                    
+                        
                         try:
                             # Create JWT for GitHub App authentication
                             now = int(time.time())
@@ -1546,30 +2711,30 @@ object IntegrateRelease : BuildType({
                                 'exp': now + 600,  # JWT expires in 10 minutes
                                 'iss': app_id
                             }
-                    
+                            
                             print(f"🔐 Generating GitHub App JWT...")
                             jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
-                    
+                            
                             # Exchange JWT for installation token
                             headers = {
                                 'Authorization': f'Bearer {jwt_token}',
                                 'Accept': 'application/vnd.github.v3+json'
                             }
-                    
+                            
                             print(f"🔐 Requesting GitHub App installation token...")
                             response = requests.post(
                                 f'https://api.github.com/app/installations/{installation_id}/access_tokens',
                                 headers=headers
                             )
                             response.raise_for_status()
-                    
+                            
                             token_data = response.json()
                             token = token_data['token']
                             expires_at = token_data['expires_at']
-                    
+                            
                             print(f"✓ Generated installation token (expires: {expires_at})")
                             return token
-                    
+                            
                         except requests.RequestException as e:
                             print(f"✗ Error generating GitHub App token: {e}")
                             if hasattr(e, 'response') and e.response is not None:
@@ -1586,19 +2751,19 @@ object IntegrateRelease : BuildType({
                         This allows git push, fetch, and other operations to work with the temporary token.
                         $TQ
                         print(f"\n=== Configuring Git Credentials ===")
-                    
+                        
                         try:
                             # Update the remote URL to include the token
                             # Format: https://x-access-token:TOKEN@github.com/owner/repo.git
                             remote_url = f'https://x-access-token:{token}@github.com/{owner}/{repo}.git'
-                    
+                            
                             subprocess.run(
                                 ['git', 'remote', 'set-url', 'origin', remote_url],
                                 check=True,
                                 capture_output=True
                             )
                             print(f"✓ Configured git remote with installation token")
-                    
+                            
                             # Configure git user for commits/tags
                             # Using GitHub Actions bot identity
                             subprocess.run(
@@ -1612,7 +2777,7 @@ object IntegrateRelease : BuildType({
                                 capture_output=True
                             )
                             print(f"✓ Configured git user identity")
-                    
+                            
                         except subprocess.CalledProcessError as e:
                             print(f"✗ Error configuring git credentials: {e}")
                             if e.stderr:
@@ -1713,31 +2878,55 @@ object IntegrateRelease : BuildType({
                     
                     def get_linked_issues(owner: str, repo: str, pr_number: int, token: str) -> List[int]:
                         $TQ
-                        Get issues linked to the PR via GitHub's timeline API and GraphQL.
+                        Get issues linked to the PR via GitHub's GraphQL API.
                         $TQ
-                        url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/timeline"
+                        url = "https://api.github.com/graphql"
                         headers = {
-                            'Authorization': f'token {token}',
-                            'Accept': 'application/vnd.github.mockingbird-preview+json'
+                            'Authorization': f'Bearer {token}',
+                            'Content-Type': 'application/json'
                         }
-                    
+                        
+                        query = $TQ
+                        query(${'$'}owner: String!, ${'$'}repo: String!, ${'$'}pr_number: Int!) {
+                          repository(owner: ${'$'}owner, name: ${'$'}repo) {
+                            pullRequest(number: ${'$'}pr_number) {
+                              closingIssuesReferences(first: 10) {
+                                nodes {
+                                  number
+                                }
+                              }
+                            }
+                          }
+                        }
+                        $TQ
+                        
+                        variables = {
+                            'owner': owner,
+                            'repo': repo,
+                            'pr_number': pr_number
+                        }
+                        
                         try:
-                            response = requests.get(url, headers=headers)
+                            response = requests.post(url, headers=headers, json={'query': query, 'variables': variables})
                             response.raise_for_status()
-                            timeline = response.json()
-                    
+                            data = response.json()
+                            
+                            if 'errors' in data:
+                                print(f"⚠ Warning: GraphQL errors: {data['errors']}")
+                                return []
+                            
                             linked_issues = []
-                            for event in timeline:
-                                if event.get('event') == 'cross-referenced' and event.get('source'):
-                                    source = event['source']
-                                    if source.get('type') == 'issue':
-                                        issue_number = source['issue'].get('number')
-                                        if issue_number:
-                                            linked_issues.append(issue_number)
-                    
+                            pr_data = data.get('data', {}).get('repository', {}).get('pullRequest', {})
+                            closing_issues = pr_data.get('closingIssuesReferences', {}).get('nodes', [])
+                            
+                            for issue in closing_issues:
+                                issue_number = issue.get('number')
+                                if issue_number:
+                                    linked_issues.append(issue_number)
+                            
                             return linked_issues
                         except requests.RequestException as e:
-                            print(f"⚠ Warning: Could not fetch linked issues via timeline API: {e}")
+                            print(f"⚠ Warning: Could not fetch linked issues via GraphQL API: {e}")
                             return []
                     
                     
@@ -2171,18 +3360,18 @@ object IntegrateRelease : BuildType({
                             description='GitHub PR Integration Script with Semantic Versioning'
                         )
                         parser.add_argument('--pr-id', type=int, required=True,
-                                            help='Pull Request ID to integrate')
+                                           help='Pull Request ID to integrate')
                         parser.add_argument('--target-branch', type=str, default='main',
-                                            help='Target branch to integrate into (default: main)')
+                                           help='Target branch to integrate into (default: main)')
                         parser.add_argument('--dry-run', action='store_true',
                                             help='Perform a dry run without creating tags or releases')
                         vs_version_group = parser.add_mutually_exclusive_group(required=True)
                         vs_version_group.add_argument('--vs-version', type=str, default=None,
-                                                      help='Vintage Story version to build for (Default: 1.21.6)')
+                                            help='Vintage Story version to build for (Default: 1.21.6)')
                         vs_version_group.add_argument('--api-stable-vs-version', action='store_true',
-                                                      help='Use Vintage Story version from the latest stable API release')
+                                            help='Use Vintage Story version from the latest stable API release')
                         vs_version_group.add_argument('--api-unstable-vs-version', action='store_true',
-                                                      help='Use Vintage Story version from the latest unstable API release')
+                                            help='Use Vintage Story version from the latest unstable API release')
                     
                         args = parser.parse_args()
                     
