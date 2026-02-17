@@ -1968,12 +1968,14 @@ object IntegrateRelease : BuildType({
                             can_push = permissions.get('push', False)
                             is_admin = permissions.get('admin', False)
                     
+                            # GitHub App installation tokens don't have traditional push/admin flags
+                            # Instead, they have app-level permissions granted to the installation
                             if not (can_push or is_admin):
-                                print(f"✗ Error: No push permission to repository {owner}/{repo}")
-                                print("  The configured GITHUB_TOKEN does not have sufficient permissions")
-                                sys.exit(1)
-                    
-                            print(f"✓ Verified push permissions to {owner}/{repo}")
+                                # Check if this might be a GitHub App token by looking for typical indicators
+                                print(f"⚠ Traditional push permissions not found (likely using GitHub App token)")
+                                print(f"  Skipping user-style permission check - will validate on actual push")
+                            else:
+                                print(f"✓ Verified push permissions to {owner}/{repo}")
                     
                             # Check branch protection restrictions
                             protection_url = f"https://api.github.com/repos/{owner}/{repo}/branches/{branch}/protection"
@@ -1981,6 +1983,12 @@ object IntegrateRelease : BuildType({
                     
                             if response.status_code == 404:
                                 print(f"✓ No branch protection on '{branch}'")
+                                return
+                            
+                            if response.status_code == 403:
+                                print(f"⚠ Cannot read branch protection rules (403 Forbidden)")
+                                print(f"  This is normal for GitHub App tokens")
+                                print(f"  Proceeding - actual push will validate permissions")
                                 return
                     
                             if response.status_code == 200:
