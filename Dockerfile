@@ -79,11 +79,11 @@ ENV WORLDCONFIG_ALLOW_COORDINATES=true
 ENV WORLDCONFIG_ALLOW_MAP=true
 
 # Install required .Net runtime
-RUN wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+RUN apt update && \
+    apt install -yf wget curl vim gosu screen procps && \
+    wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
-    apt update && \
-    apt install -yf wget curl vim gosu screen procps && \
     apt install -y aspnetcore-runtime-${DOTNET_VERSION} && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
