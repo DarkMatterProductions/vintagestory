@@ -237,7 +237,6 @@ object IntegrateRelease : BuildType({
         param("build.gameversion", "")
         param("build.version.new", "")
         param("build.docker.tag", "")
-        param("vcs.auth.token", "%teamcity.vcs.auth.token.Integrate-and-Release%")
         text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
         param("build.version.old", "")
         param("build.docker.version.new", "")
