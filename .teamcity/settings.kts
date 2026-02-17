@@ -2322,7 +2322,7 @@ object IntegrateRelease : BuildType({
                     if __name__ == '__main__':
                         main()
                 """.trimIndent()
-                scriptArguments = "--dry-run --pr-id %build.pullrequest.id% --api-stable-vs-version --target-branch main"
+                scriptArguments = "--pr-id %build.pullrequest.id% --api-stable-vs-version --target-branch main"
             }
         }
     }
