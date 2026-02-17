@@ -289,6 +289,7 @@ object IntegrateRelease : BuildType({
         python {
             name = "Integrate Source Branch"
             id = "python_runner"
+            enabled = false
             environment = pipenv {
                 arguments = "--python 3.11 pyyaml requests"
             }
