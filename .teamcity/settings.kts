@@ -234,6 +234,7 @@ object IntegrateRelease : BuildType({
     name = "Integrate Release"
 
     params {
+        param("env.GITHUB_APP_INSTALLATION_ID", "dmp-teamcity")
         param("build.gameversion", "")
         param("build.version.new", "")
         param("build.docker.tag", "")
