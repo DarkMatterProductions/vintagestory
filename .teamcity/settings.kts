@@ -234,12 +234,13 @@ object IntegrateRelease : BuildType({
     name = "Integrate Release"
 
     params {
-        password("system.vcs.auth.token", "credentialsJSON:cd1076b1-4804-4dba-babf-6e3d93e09c68")
         param("build.gameversion", "")
-        param("build.version.old", "")
-        param("build.docker.version.new", "")
         param("build.version.new", "")
         param("build.docker.tag", "")
+        password("system.vcs.auth.token", "credentialsJSON:cd1076b1-4804-4dba-babf-6e3d93e09c68")
+        text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
+        param("build.version.old", "")
+        param("build.docker.version.new", "")
     }
 
     vcs {
