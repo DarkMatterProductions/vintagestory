@@ -239,7 +239,7 @@ object IntegrateRelease : BuildType({
         param("build.version.new", "")
         param("build.docker.tag", "")
         text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
-        param("env.GITHUB_APP_ID", "2881366")
+        password("env.GITHUB_APP_ID", "credentialsJSON:824b9fac-e3ae-4f6b-9f4e-881033cca625")
         password("env.GITHUB_APP_PRIVATE_KEY", "credentialsJSON:6ed847ba-6c18-4ab6-877d-33d3e2d1cdbd")
         param("build.version.old", "")
         param("build.docker.version.new", "")
