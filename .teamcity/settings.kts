@@ -2359,10 +2359,6 @@ object RunTestsAndLinting : BuildType({
         root(HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard)
 
         cleanCheckout = true
-        branchFilter = """
-            +:refs/heads/feature/*
-            +:refs/heads/fix/*
-        """.trimIndent()
     }
 
     steps {
