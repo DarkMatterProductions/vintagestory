@@ -1246,7 +1246,7 @@ object IntegrateRelease : BuildType({
             name = "Integrate PR"
             id = "Integrate_PR"
             environment = pipenv {
-                arguments = "--python 3.11 pyyaml jwt"
+                arguments = "--python 3.11 pyyaml PyJWT"
             }
             command = script {
                 content = """
