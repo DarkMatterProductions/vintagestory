@@ -2419,12 +2419,6 @@ object RunTestsAndLinting : BuildType({
     features {
         perfmon {
         }
-        vcsLabeling {
-            vcsRootId = "${DslContext.settingsRoot.id}"
-            labelingPattern = "feature-%system.build.number%"
-            successfulOnly = true
-            branchFilter = "+:feature/*"
-        }
         commitStatusPublisher {
             vcsRootExtId = "${HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard.id}"
             publisher = github {
