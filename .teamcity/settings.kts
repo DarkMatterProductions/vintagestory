@@ -238,7 +238,6 @@ object IntegrateRelease : BuildType({
         param("build.version.new", "")
         param("build.docker.tag", "")
         text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
-        password("env.SYSTEM_VCS_AUTH_TOKEN", "credentialsJSON:58c607f9-3cbc-4b2c-bd9b-3a59d056d203")
         param("build.version.old", "")
         param("build.docker.version.new", "")
     }
