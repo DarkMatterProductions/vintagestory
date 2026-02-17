@@ -234,7 +234,7 @@ object IntegrateRelease : BuildType({
     name = "Integrate Release"
 
     params {
-        param("env.GITHUB_APP_INSTALLATION_ID", "dmp-teamcity")
+        password("env.GITHUB_APP_INSTALLATION_ID", "credentialsJSON:9b36ba2c-234d-4100-aae8-60af89dcfad5")
         param("build.gameversion", "")
         param("build.version.new", "")
         param("build.docker.tag", "")
