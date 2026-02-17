@@ -1256,6 +1256,8 @@ object IntegrateRelease : BuildType({
                     import requests
                     import argparse
                     import sys
+                    import jwt
+                    import time
                     from typing import Tuple, List, Optional, Dict, Any
                     
                     
@@ -1519,19 +1521,103 @@ object IntegrateRelease : BuildType({
                     
                     # ===== NEW INTEGRATION FUNCTIONS =====
                     
-                    def get_github_token() -> str:
-                        ${TQ}Get GitHub token from TeamCity configuration parameter.$TQ
-                        #token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
-                        token = ""
-                        if not token:
-                            print("✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set")
-                            print("  Please configure the 'system.vcs.auth.token' parameter in TeamCity")
+                    def get_github_app_installation_token() -> str:
+                        $TQ
+                        Generate a GitHub App installation token (valid for 1 hour).
+                        Uses GitHub App credentials from TeamCity environment variables.
+                        $TQ
+                        app_id = os.environ.get('GITHUB_APP_ID')
+                        private_key = os.environ.get('GITHUB_APP_PRIVATE_KEY')
+                        installation_id = os.environ.get('GITHUB_APP_INSTALLATION_ID')
+                    
+                        if not all([app_id, private_key, installation_id]):
+                            print("✗ Error: GitHub App credentials not configured")
+                            print("  Required environment variables:")
+                            print("  - GITHUB_APP_ID")
+                            print("  - GITHUB_APP_PRIVATE_KEY")
+                            print("  - GITHUB_APP_INSTALLATION_ID")
                             sys.exit(1)
-                        # Debug: Check if token is resolving
-                        print(f"🔍 Token length: {len(token)} characters")
-                        print(f"🔍 Token prefix: {token[:7]}..." if len(token) > 7 else f"🔍 Full token: {token}")
-                        
-                        return token
+                    
+                        try:
+                            # Create JWT for GitHub App authentication
+                            now = int(time.time())
+                            payload = {
+                                'iat': now,
+                                'exp': now + 600,  # JWT expires in 10 minutes
+                                'iss': app_id
+                            }
+                    
+                            print(f"🔐 Generating GitHub App JWT...")
+                            jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+                    
+                            # Exchange JWT for installation token
+                            headers = {
+                                'Authorization': f'Bearer {jwt_token}',
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                    
+                            print(f"🔐 Requesting GitHub App installation token...")
+                            response = requests.post(
+                                f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+                                headers=headers
+                            )
+                            response.raise_for_status()
+                    
+                            token_data = response.json()
+                            token = token_data['token']
+                            expires_at = token_data['expires_at']
+                    
+                            print(f"✓ Generated installation token (expires: {expires_at})")
+                            return token
+                    
+                        except requests.RequestException as e:
+                            print(f"✗ Error generating GitHub App token: {e}")
+                            if hasattr(e, 'response') and e.response is not None:
+                                print(f"  Response: {e.response.text}")
+                            sys.exit(1)
+                        except Exception as e:
+                            print(f"✗ Error generating GitHub App token: {e}")
+                            sys.exit(1)
+                    
+                    
+                    def configure_git_credentials(token: str, owner: str, repo: str) -> None:
+                        $TQ
+                        Configure git to use the GitHub App installation token for authentication.
+                        This allows git push, fetch, and other operations to work with the temporary token.
+                        $TQ
+                        print(f"\n=== Configuring Git Credentials ===")
+                    
+                        try:
+                            # Update the remote URL to include the token
+                            # Format: https://x-access-token:TOKEN@github.com/owner/repo.git
+                            remote_url = f'https://x-access-token:{token}@github.com/{owner}/{repo}.git'
+                    
+                            subprocess.run(
+                                ['git', 'remote', 'set-url', 'origin', remote_url],
+                                check=True,
+                                capture_output=True
+                            )
+                            print(f"✓ Configured git remote with installation token")
+                    
+                            # Configure git user for commits/tags
+                            # Using GitHub Actions bot identity
+                            subprocess.run(
+                                ['git', 'config', 'user.name', 'github-actions[bot]'],
+                                check=True,
+                                capture_output=True
+                            )
+                            subprocess.run(
+                                ['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
+                                check=True,
+                                capture_output=True
+                            )
+                            print(f"✓ Configured git user identity")
+                    
+                        except subprocess.CalledProcessError as e:
+                            print(f"✗ Error configuring git credentials: {e}")
+                            if e.stderr:
+                                print(f"  {e.stderr.decode()}")
+                            sys.exit(1)
                     
                     
                     def parse_repo_from_git_remote() -> Tuple[str, str]:
@@ -2085,18 +2171,18 @@ object IntegrateRelease : BuildType({
                             description='GitHub PR Integration Script with Semantic Versioning'
                         )
                         parser.add_argument('--pr-id', type=int, required=True,
-                                           help='Pull Request ID to integrate')
+                                            help='Pull Request ID to integrate')
                         parser.add_argument('--target-branch', type=str, default='main',
-                                           help='Target branch to integrate into (default: main)')
+                                            help='Target branch to integrate into (default: main)')
                         parser.add_argument('--dry-run', action='store_true',
                                             help='Perform a dry run without creating tags or releases')
                         vs_version_group = parser.add_mutually_exclusive_group(required=True)
                         vs_version_group.add_argument('--vs-version', type=str, default=None,
-                                            help='Vintage Story version to build for (Default: 1.21.6)')
+                                                      help='Vintage Story version to build for (Default: 1.21.6)')
                         vs_version_group.add_argument('--api-stable-vs-version', action='store_true',
-                                            help='Use Vintage Story version from the latest stable API release')
+                                                      help='Use Vintage Story version from the latest stable API release')
                         vs_version_group.add_argument('--api-unstable-vs-version', action='store_true',
-                                            help='Use Vintage Story version from the latest unstable API release')
+                                                      help='Use Vintage Story version from the latest unstable API release')
                     
                         args = parser.parse_args()
                     
@@ -2109,13 +2195,16 @@ object IntegrateRelease : BuildType({
                         print(f"Pull Request: #{args.pr_id}")
                         print(f"Target Branch: {args.target_branch}\n")
                     
-                        # Step 1: Get GitHub token
-                        token = get_github_token()
+                        # Step 1: Generate GitHub App installation token
+                        token = get_github_app_installation_token()
                     
                         # Step 2: Parse repository from git remote
                         owner, repo = parse_repo_from_git_remote()
                     
-                        # Step 3: Get PR details from GitHub API
+                        # Step 3: Configure git credentials with the token
+                        configure_git_credentials(token, owner, repo)
+                    
+                        # Step 4: Get PR details from GitHub API
                         pr_data = get_pr_details(owner, repo, args.pr_id, token)
                         source_branch = pr_data['head']['ref']
                         target_branch = args.target_branch
@@ -2123,16 +2212,16 @@ object IntegrateRelease : BuildType({
                         print(f"📋 Source Branch: {source_branch}")
                         print(f"📋 Target Branch: {target_branch}")
                     
-                        # Step 4: Validate PR status (not draft, is open)
+                        # Step 5: Validate PR status (not draft, is open)
                         validate_pr_status(pr_data)
                     
-                        # Step 5: Validate issue association
+                        # Step 6: Validate issue association
                         validate_issue_association(owner, repo, pr_data, token)
                     
-                        # Step 6: Validate checks and approvals
+                        # Step 7: Validate checks and approvals
                         validate_checks_and_approvals(owner, repo, pr_data, token)
                     
-                        # Step 7: Validate branch permissions
+                        # Step 8: Validate branch permissions
                         validate_branch_permissions(owner, repo, target_branch, token)
                     
                         if args.dry_run:
@@ -2140,23 +2229,23 @@ object IntegrateRelease : BuildType({
                             print("✓ All validations passed. Integration would proceed in normal mode.")
                             sys.exit(0)
                     
-                        # Step 8: Fetch latest changes
+                        # Step 9: Fetch latest changes
                         fetch_branches(source_branch, target_branch)
                     
-                        # Step 9: Compare branch heads
+                        # Step 10: Compare branch heads
                         if compare_branch_heads(source_branch, target_branch):
                             print(f"\n✓ SUCCESS: {source_branch} is already integrated into {target_branch}")
                             print(f"  No action needed - branches are in sync")
                             sys.exit(0)
                     
-                        # Step 10: Get Vintage Story version
+                        # Step 11: Get Vintage Story version
                         if not args.vs_version:
                             vs_version = get_vs_version(stable=args.api_stable_vs_version)
                         else:
                             vs_version = args.vs_version
                         print(f"\n📦 Vintage Story version: {vs_version}")
                     
-                        # Step 11: Determine new version (on target branch context)
+                        # Step 12: Determine new version (on target branch context)
                         print(f"\n=== Determining Version ===")
                         current_version = get_last_version()
                         print(f"Current version on {target_branch}: {current_version}")
@@ -2170,19 +2259,19 @@ object IntegrateRelease : BuildType({
                             sys.exit(1)
                     
                         print(f"New version: {new_version}")
-                        
-                        
-                        # Step 12: Perform rebase integration
+                    
+                    
+                        # Step 13: Perform rebase integration
                         perform_rebase_integration(source_branch, target_branch)
                     
                         if not args.dry_run:
-                            # Step 13: Push integrated branch and tags
+                            # Step 14: Push integrated branch and tags
                             push_integrated_branch(target_branch, new_version)
                         else:
                             print("\n🔍 DRY-RUN: Skipping push of integrated branch and tags")
                             print(f"✓ Would push {target_branch} and tag {new_version} in normal mode")
                     
-                        # Step 14: Output version for TeamCity and GitHub Actions
+                        # Step 15: Output version for TeamCity and GitHub Actions
                         print(f"\n=== Build Parameters ===")
                         print(f"##teamcity[setParameter name='build.docker.version.new' value='{new_version}']")
                         print(f"##teamcity[setParameter name='build.docker.tag' value='{vs_version}-{new_version}']")
