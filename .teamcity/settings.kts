@@ -234,12 +234,12 @@ object IntegrateRelease : BuildType({
     name = "Integrate Release"
 
     params {
-        param("build.gameversion", "")
-        param("build.version.new", "")
-        param("build.docker.tag", "")
         text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
+        param("build.gameversion", "")
         param("build.version.old", "")
         param("build.docker.version.new", "")
+        param("build.version.new", "")
+        param("build.docker.tag", "")
     }
 
     vcs {
@@ -1518,7 +1518,8 @@ object IntegrateRelease : BuildType({
                     
                     def get_github_token() -> str:
                         ${TQ}Get GitHub token from TeamCity configuration parameter.$TQ
-                        token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
+                        #token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
+                        token = "%teamcity.vcs.auth.token.Integrate-and-Release%"
                         if not token:
                             print("✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set")
                             print("  Please configure the 'system.vcs.auth.token' parameter in TeamCity")
