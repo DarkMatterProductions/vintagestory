@@ -1519,7 +1519,7 @@ object IntegrateRelease : BuildType({
                     def get_github_token() -> str:
                         ${TQ}Get GitHub token from TeamCity configuration parameter.$TQ
                         #token = os.environ.get('SYSTEM_VCS_AUTH_TOKEN')
-                        token = "%teamcity.vcs.auth.token.Integrate-and-Release%"
+                        token = ""
                         if not token:
                             print("✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set")
                             print("  Please configure the 'system.vcs.auth.token' parameter in TeamCity")
