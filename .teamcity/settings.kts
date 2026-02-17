@@ -1524,6 +1524,10 @@ object IntegrateRelease : BuildType({
                             print("✗ Error: SYSTEM_VCS_AUTH_TOKEN environment variable not set")
                             print("  Please configure the 'system.vcs.auth.token' parameter in TeamCity")
                             sys.exit(1)
+                        # Debug: Check if token is resolving
+                        print(f"🔍 Token length: {len(token)} characters")
+                        print(f"🔍 Token prefix: {token[:7]}..." if len(token) > 7 else f"🔍 Full token: {token}")
+                        
                         return token
                     
                     
