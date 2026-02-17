@@ -234,12 +234,13 @@ object IntegrateRelease : BuildType({
     name = "Integrate Release"
 
     params {
-        text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
         param("build.gameversion", "")
-        param("build.version.old", "")
-        param("build.docker.version.new", "")
         param("build.version.new", "")
         param("build.docker.tag", "")
+        text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
+        password("env.GITHUB_APP_PRIVATE_KEY", "credentialsJSON:6ed847ba-6c18-4ab6-877d-33d3e2d1cdbd")
+        param("build.version.old", "")
+        param("build.docker.version.new", "")
     }
 
     vcs {
