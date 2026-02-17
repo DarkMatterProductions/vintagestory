@@ -238,7 +238,7 @@ object IntegrateRelease : BuildType({
         param("build.version.new", "")
         param("build.docker.tag", "")
         text("build.pullrequest.id", "", label = "Pull Request ID#", description = "PR Id to Integrate into main branch", display = ParameterDisplay.PROMPT, allowEmpty = true)
-        password("env.SYSTEM_VCS_AUTH_TOKEN", "credentialsJSON:701e7549-b2b2-418e-8ba1-e7a644033fd7")
+        param("env.SYSTEM_VCS_AUTH_TOKEN", "%teamcity.vcs.auth.token.Integrate-and-Release%")
         param("build.version.old", "")
         param("build.docker.version.new", "")
     }
