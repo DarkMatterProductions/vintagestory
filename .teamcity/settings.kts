@@ -186,8 +186,8 @@ object IntegrateAndPublish : BuildType({
 
     params {
         param("build.gameversion", "")
-        param("env.GITHUB_LATEST_REF", "")
         param("build.version.new", "")
+        param("env.GITHUB_LATEST_REF", "")
     }
 
     vcs {
@@ -234,10 +234,11 @@ object IntegrateRelease : BuildType({
     name = "Integrate Release"
 
     params {
+        password("system.vcs.auth.token", "credentialsJSON:cd1076b1-4804-4dba-babf-6e3d93e09c68")
         param("build.gameversion", "")
         param("build.version.old", "")
-        param("build.version.new", "")
         param("build.docker.version.new", "")
+        param("build.version.new", "")
         param("build.docker.tag", "")
     }
 
