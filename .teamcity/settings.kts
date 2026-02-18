@@ -230,12 +230,50 @@ object IntegrateAndPublish : BuildType({
                 content = """
                     import argparse
                     import os
+                    import re
                     import requests
                     import sys
                     
                     
                     class ApiQueryException(Exception):
                         pass
+                    
+                      
+                    def get_last_version() -> str:
+                        ${TQ}Get the last semantic version tag, or return 0.0.0 if none exist.$TQ
+                        try:
+                            # Get current branch name
+                            branch_result = subprocess.run(
+                                ['git', 'branch', '--show-current'],
+                                capture_output=True,
+                                text=True
+                            )
+                            _branch_stdout = branch_result.stdout.strip()
+                            _branch_stderr = branch_result.stderr.strip()
+                            _branch_returncode = branch_result.returncode
+                            print(f"Current branch: {_branch_stdout} (return code: {_branch_returncode}, stderr: '{_branch_stderr}')")
+                            current_branch = _branch_stdout
+                    
+                            # Get tags merged into current branch
+                            result = subprocess.run(
+                                ['git', 'tag', '--merged', current_branch],
+                                capture_output=True,
+                                text=True
+                            )
+                            raw_tags = result.stdout
+                            tags = [tag.strip() for tag in raw_tags.split('\n') if tag.strip()]
+                            # Filter to only semantic version tags (e.g., 1.0.0)
+                            version_tags = [tag for tag in tags if tag and re.match(r'^\d+\.\d+\.\d+${'$'}', tag)]
+                    
+                            if not version_tags:
+                                return '0.0.0'
+                    
+                            # Sort by version number and return the highest
+                            version_tags.sort(key=lambda v: tuple(map(int, v.split('.'))))
+                            return version_tags[-1]
+                        except Exception as e:
+                            print(f"Error getting last version: {e}")
+                            return '0.0.0'
                     
                     
                     def get_vs_version(stable):
@@ -260,7 +298,7 @@ object IntegrateAndPublish : BuildType({
                         try:
                             vs_version = get_vs_version(args.unstable)
                             print(f"Vintage Story Version: {vs_version}")
-                            container_version = os.environ["LATEST_VERSION"]
+                            container_version = get_last_version()
                             print(f"Container Version: {container_version}")
                             if container_version and vs_version:
                                 print("Outputting TeamCity Parameters")
