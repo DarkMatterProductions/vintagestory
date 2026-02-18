@@ -284,10 +284,6 @@ object IntegrateAndPublish : BuildType({
     features {
         perfmon {
         }
-        vcsLabeling {
-            vcsRootId = "${DslContext.settingsRoot.id}"
-            labelingPattern = "%build.gameversion%-%build.version.new%"
-        }
     }
 })
 
