@@ -213,7 +213,7 @@ object IntegrateAndPublish : BuildType({
             type = "tc:recipe:jjideenschmiede/github-last-matching-ref@1.0.1"
             executionMode = BuildStep.ExecutionMode.DEFAULT
             param("env.input_github_access_token", "zxx775d03cbe80d301b")
-            param("env.input_variable_name", "LATEST_VERSION")
+            param("env.input_variable_name", "LATEST_VS_VERSION")
             param("plugin.docker.imagePlatform", "")
             param("plugin.docker.imageId", "")
             param("teamcity.step.phase", "")
