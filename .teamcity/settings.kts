@@ -222,7 +222,7 @@ object IntegrateAndPublish : BuildType({
             param("plugin.docker.run.parameters", "")
         }
         python {
-            name = "Get Vintage Story Stable Version"
+            name = "Generate Docker Tag"
             id = "Get_Vintage_Story_Stable_Version"
             environment = pipenv {
                 arguments = "--python 3.11"
