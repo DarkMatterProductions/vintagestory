@@ -2478,7 +2478,10 @@ object RunTestsAndLinting : BuildType({
 
     triggers {
         vcs {
-            branchFilter = "+:fix/*"
+            branchFilter = """
+                +:refs/heads/feature/*
+                +:refs/heads/fix/*
+            """.trimIndent()
         }
     }
 
