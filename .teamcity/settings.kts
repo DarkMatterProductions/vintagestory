@@ -230,7 +230,10 @@ object IntegrateAndPublish : BuildType({
             }
             command = script {
                 content = """
+                    import argparse
+                    import os
                     import requests
+                    import sys
                     
                     
                     class ApiQueryException(Exception):
@@ -252,15 +255,24 @@ object IntegrateAndPublish : BuildType({
                     
                     
                     if __name__ == "__main__":
-                        import argparse
                     
                         parser = argparse.ArgumentParser(description="Get the latest Vintage Story version from the Official HTTP API.")
                         parser.add_argument("--unstable", action="store_false", help="Get the latest unstable version instead of the latest stable version.")
                         args = parser.parse_args()
                     
                         try:
-                            version = get_vs_version(args.stable)
-                            print(f"##teamcity[setParameter name='build.gameversion' value='{version}']")
+                            vs_version = get_vs_version(args.stable)
+                            container_version = os.environ["LATEST_VERSION"]
+                            if container_version and vs_version:
+                            	print(f"##teamcity[setParameter name='build.version.game' value='{vs_version}']")
+                            	print(f"##teamcity[setParameter name='build.version.container' value='{container_version}']")
+                            	print(f"##teamcity[setParameter name='build.version.dockertag' value='{container_version}-{version}']")
+                            else:
+                                if not container_version:
+                             		print("Unable to lookup current container version.")
+                                else:
+                                    print("Unable to lookup current game version.")
+                                sys.exit(1)
                         except ApiQueryException as e:
                             print(e)
                 """.trimIndent()
