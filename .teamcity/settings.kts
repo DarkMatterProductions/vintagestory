@@ -186,7 +186,6 @@ object IntegrateAndPublish : BuildType({
 
     params {
         param("env.GITHUB_LATEST_REF", "")
-        param("build.version.new", "")
     }
 
     vcs {
