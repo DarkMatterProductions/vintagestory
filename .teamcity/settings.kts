@@ -185,6 +185,7 @@ object IntegrateAndPublish : BuildType({
     maxRunningBuildsPerBranch = "*:1"
 
     params {
+        param("build.version.game", "")
         param("build.version.dockertag", "")
         param("build.version.container", "")
         param("env.GITHUB_LATEST_REF", "")
