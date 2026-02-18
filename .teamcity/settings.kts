@@ -2428,6 +2428,10 @@ object RunTestsAndLinting : BuildType({
         root(HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard)
 
         cleanCheckout = true
+        branchFilter = """
+            +:feature/*
+            +:fix/*
+        """.trimIndent()
     }
 
     steps {
