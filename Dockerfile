@@ -84,6 +84,7 @@ RUN apt update && \
     wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
+    apt update && \
     apt install -y aspnetcore-runtime-${DOTNET_VERSION} && \
     apt clean && rm -rf /var/lib/apt/lists/*
 

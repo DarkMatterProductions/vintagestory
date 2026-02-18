@@ -1,12 +1,11 @@
 ![Official game logo for Vinstage Story as published by the developer Anego Studios](./images/vintage-story.png "Vintage Story Logo")
 
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/DarkmatterProductions/vintagestory/release-workflow.yaml?branch=main&style=flat&label=Image%20Build&link=https%3A%2F%2Fgithub.com%2FDarkMatterProductions%2Fvintagestory%2Fpkgs%2Fcontainer%2Fvintagestory)](https://github.com/DarkMatterProductions/vintagestory)
 [![GitHub Release](https://img.shields.io/github/v/release/DarkmatterProductions/vintagestory?display_name=release&style=flat&label=Latest%20Stable%20Release&color=blue)](https://github.com/DarkMatterProductions/vintagestory/pkgs/container/vintagestory/?tag=latest)
 [![GitHub contributors](https://img.shields.io/github/contributors/DarkmatterProductions/vintagestory?style=flat&label=Contributors&color=%234B86EB)](https://github.com/DarkMatterProductions/vintagestory/graphs/contributors)
 
-![Dynamic Regex Badge](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fapi.vintagestory.at%2Flateststable.txt&search=(%5Cd%2B).(%5Cd%2B).(%5Cd%2B)(.*)&style=flat&label=Vintage%20Story%20Stable%20Version&color=%23029600)
-![Dynamic Regex Badge](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fapi.vintagestory.at%2Flatestunstable.txt&search=(%5Cd%2B).(%5Cd%2B).(%5Cd%2B)(.*)&style=flat&label=Vintage%20Story%20Stable%20Version&color=FCF765)
-![Static Badge](https://img.shields.io/badge/Vintage_Story_Preview_Release_Version-1.22.0--pre.2-E32424?style=flat)
+![Vintage Story Stable Version](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fapi.vintagestory.at%2Flateststable.txt&search=(%5Cd%2B).(%5Cd%2B).(%5Cd%2B)(.*)&style=flat&label=Vintage%20Story%20Stable%20Version&color=%23029600)
+![Vintage Story Unstable Version](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fapi.vintagestory.at%2Flatestunstable.txt&search=(%5Cd%2B).(%5Cd%2B).(%5Cd%2B)(.*)&style=flat&label=Vintage%20Story%20Unstable%20Version&color=FCF765)
+![Vintage Story Preview Release Version](https://img.shields.io/badge/Vintage_Story_Preview_Release_Version-1.22.0--pre.2-E32424?style=flat)
 
 
 [![Docker Stars](https://img.shields.io/docker/stars/ralnoc/vintagestory?style=flat&label=Docker%20Stars&color=purple)](https://hub.docker.com/r/ralnoc/vintagestory)
