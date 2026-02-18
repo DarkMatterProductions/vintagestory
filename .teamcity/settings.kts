@@ -2367,6 +2367,7 @@ object IntegrateRelease : BuildType({
                         if not args.dry_run:
                             # Step 14: Push integrated branch and tags
                             push_integrated_branch(target_branch, new_version)
+                            create_git_tag(new_version)
                         else:
                             print("\n🔍 DRY-RUN: Skipping push of integrated branch and tags")
                             print(f"✓ Would push {target_branch} and tag {new_version} in normal mode")
