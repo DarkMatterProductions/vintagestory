@@ -277,8 +277,8 @@ object IntegrateAndPublish : BuildType({
                 }
                 platform = DockerCommandStep.ImagePlatform.Linux
                 namesAndTags = """
-                    registry.dmpsys.in/vintagestory:%build.version.game%-%build.version.container%-python3-trixie-slim
-                    registry.dmpsys.in/vintagestory:%build.version.game%-%build.version.container%
+                    registry.dmpsys.in/vintagestory:%build.version.dockertag%-python3-trixie-slim
+                    registry.dmpsys.in/vintagestory:%build.version.dockertag%
                     registry.dmpsys.in/vintagestory:%build.version.container%-python3-trixie-slim
                     registry.dmpsys.in/vintagestory:%build.version.container%
                     registry.dmpsys.in/vintagestory:%build.version.game%
