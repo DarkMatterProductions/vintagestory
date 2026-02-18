@@ -186,6 +186,7 @@ object IntegrateAndPublish : BuildType({
 
     params {
         param("build.version.dockertag", "")
+        param("build.version.container", "")
         param("env.GITHUB_LATEST_REF", "")
     }
 
