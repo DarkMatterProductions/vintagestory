@@ -285,6 +285,20 @@ object IntegrateAndPublish : BuildType({
                 """.trimIndent()
             }
         }
+        dockerCommand {
+            name = "Publish Docker image"
+            id = "Publish_Docker_image"
+            commandType = push {
+                namesAndTags = """
+                    registry.dmpsys.in/vintagestory:%build.version.dockertag%-python3-trixie-slim
+                    registry.dmpsys.in/vintagestory:%build.version.dockertag%
+                    registry.dmpsys.in/vintagestory:%build.version.container%-python3-trixie-slim
+                    registry.dmpsys.in/vintagestory:%build.version.container%
+                    registry.dmpsys.in/vintagestory:%build.version.game%
+                    registry.dmpsys.in/vintagestory:latest
+                """.trimIndent()
+            }
+        }
     }
 
     features {
