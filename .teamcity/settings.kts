@@ -314,6 +314,7 @@ object IntegrateRelease : BuildType({
         branchFilter = """
             +:refs/heads/feature/*
             +:refs/heads/fix/*
+            +:<default>
         """.trimIndent()
     }
 
