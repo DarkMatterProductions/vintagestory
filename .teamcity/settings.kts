@@ -57,6 +57,13 @@ project {
 
     features {
         dockerRegistry {
+            id = "PROJECT_EXT_11"
+            name = "Github Container Registry"
+            url = "https://ghcr.io"
+            userName = "darkmatterproductions"
+            password = "credentialsJSON:ed9261ff-e009-49ef-9b4d-f5d94d50a2cd"
+        }
+        dockerRegistry {
             id = "PROJECT_EXT_3"
             name = "Docker Registry"
             userName = "ralnoc"
