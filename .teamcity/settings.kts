@@ -198,16 +198,6 @@ object IntegrateAndPublish : BuildType({
     }
 
     steps {
-        dockerCommand {
-            id = "DockerCommand"
-            commandType = build {
-                source = file {
-                    path = "Dockerfile"
-                }
-                platform = DockerCommandStep.ImagePlatform.Linux
-                namesAndTags = "registry.dmpsys.in/vintagestory:%env.GITHUB_LATEST_REF%"
-            }
-        }
         step {
             name = "Get current version git tag"
             id = "Git_current_version"
@@ -276,6 +266,16 @@ object IntegrateAndPublish : BuildType({
                         except ApiQueryException as e:
                             print(e)
                 """.trimIndent()
+            }
+        }
+        dockerCommand {
+            id = "DockerCommand"
+            commandType = build {
+                source = file {
+                    path = "Dockerfile"
+                }
+                platform = DockerCommandStep.ImagePlatform.Linux
+                namesAndTags = "registry.dmpsys.in/vintagestory:%env.GITHUB_LATEST_REF%"
             }
         }
     }
