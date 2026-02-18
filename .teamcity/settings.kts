@@ -1,5 +1,6 @@
 import jetbrains.buildServer.configs.kotlin.*
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
+import jetbrains.buildServer.configs.kotlin.buildFeatures.dockerRegistryConnections
 import jetbrains.buildServer.configs.kotlin.buildFeatures.perfmon
 import jetbrains.buildServer.configs.kotlin.buildFeatures.vcsLabeling
 import jetbrains.buildServer.configs.kotlin.buildSteps.DockerCommandStep
@@ -315,6 +316,11 @@ object IntegrateAndPublish : BuildType({
 
     features {
         perfmon {
+        }
+        dockerRegistryConnections {
+            loginToRegistry = on {
+                dockerRegistryId = "PROJECT_EXT_3"
+            }
         }
     }
 })
