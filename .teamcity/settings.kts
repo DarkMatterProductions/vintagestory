@@ -276,7 +276,14 @@ object IntegrateAndPublish : BuildType({
                     path = "Dockerfile"
                 }
                 platform = DockerCommandStep.ImagePlatform.Linux
-                namesAndTags = "registry.dmpsys.in/vintagestory:%env.GITHUB_LATEST_REF%"
+                namesAndTags = """
+                    registry.dmpsys.in/vintagestory:%build.version.game%-%build.version.container%-python3-trixie-slim
+                    registry.dmpsys.in/vintagestory:%build.version.game%-%build.version.container%
+                    registry.dmpsys.in/vintagestory:%build.version.container%-python3-trixie-slim
+                    registry.dmpsys.in/vintagestory:%build.version.container%
+                    registry.dmpsys.in/vintagestory:%build.version.game%
+                    registry.dmpsys.in/vintagestory:latest
+                """.trimIndent()
             }
         }
     }
