@@ -269,6 +269,7 @@ object IntegrateAndPublish : BuildType({
             }
         }
         dockerCommand {
+            name = "Build Docker Image"
             id = "DockerCommand"
             commandType = build {
                 source = file {
