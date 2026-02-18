@@ -2478,9 +2478,6 @@ object RunTestsAndLinting : BuildType({
 
     triggers {
         vcs {
-            branchFilter = "+:feature/*"
-        }
-        vcs {
             branchFilter = "+:fix/*"
         }
     }
