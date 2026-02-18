@@ -102,6 +102,8 @@ RUN wget -P ${VSPATH} https://cdn.vintagestory.at/gamefiles/stable/vs_server_lin
     rm ${VSPATH}/vs_server_linux-x64_${VS_VERSION}.tar.gz && \
     chown -R ${USERNAME}: ${HOMEPATH}
 
+COPY vintage_rcon_client/requirements.txt /vintage_rcon_client/requirements.txt
+
 RUN python -m pip install --no-cache-dir -r "/vintage_rcon_client/requirements.txt" && \
     pip3 install --break-system-packages pyyaml
 
