@@ -197,17 +197,6 @@ object IntegrateAndPublish : BuildType({
     }
 
     steps {
-        python {
-            name = "Generate Release Version"
-            id = "Generate_Release_Version"
-            environment = pipenv {
-                arguments = "--python 3.11 pyyaml requests"
-            }
-            command = file {
-                filename = "semver.py"
-                scriptArguments = "--api-stable-vs-version"
-            }
-        }
         dockerCommand {
             id = "DockerCommand"
             commandType = build {
