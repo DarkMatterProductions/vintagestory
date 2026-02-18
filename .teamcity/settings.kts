@@ -2505,8 +2505,8 @@ object HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard 
     url = "https://github.com/DarkMatterProductions/vintagestory"
     branch = "refs/heads/main"
     branchSpec = """
-        +:refs/heads/feature/*
-        +:refs/heads/fix/*
+        +:feature/*
+        +:fix/*
     """.trimIndent()
     userNameStyle = GitVcsRoot.UserNameStyle.FULL
     userForTags = "darkmatter[bot] <noreply@darkmatter-productions.com>"
