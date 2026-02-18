@@ -188,7 +188,6 @@ object IntegrateAndPublish : BuildType({
         param("build.gameversion", "")
         param("build.version.new", "")
         param("env.GITHUB_LATEST_REF", "")
-        param("build.docker.version", "")
     }
 
     vcs {
