@@ -259,7 +259,7 @@ object IntegrateAndPublish : BuildType({
                             	print(f"##teamcity[setParameter name='build.version.dockertag' value='{container_version}-{version}']")
                             else:
                                 if not container_version:
-                             		print("Unable to lookup current container version.")
+                                    print("Unable to lookup current container version.")
                                 else:
                                     print("Unable to lookup current game version.")
                                 sys.exit(1)
