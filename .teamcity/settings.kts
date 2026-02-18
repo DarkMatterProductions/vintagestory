@@ -245,7 +245,6 @@ object IntegrateAndPublish : BuildType({
                     
                     
                     if __name__ == "__main__":
-                    
                         parser = argparse.ArgumentParser(description="Get the latest Vintage Story version from the Official HTTP API.")
                         parser.add_argument("--unstable", action="store_false", help="Get the latest unstable version instead of the latest stable version.")
                         args = parser.parse_args()
@@ -254,9 +253,9 @@ object IntegrateAndPublish : BuildType({
                             vs_version = get_vs_version(args.unstable)
                             container_version = os.environ["LATEST_VERSION"]
                             if container_version and vs_version:
-                            	print(f"##teamcity[setParameter name='build.version.game' value='{vs_version}']")
-                            	print(f"##teamcity[setParameter name='build.version.container' value='{container_version}']")
-                            	print(f"##teamcity[setParameter name='build.version.dockertag' value='{container_version}-{version}']")
+                                print(f"##teamcity[setParameter name='build.version.game' value='{vs_version}']")
+                                print(f"##teamcity[setParameter name='build.version.container' value='{container_version}']")
+                                print(f"##teamcity[setParameter name='build.version.dockertag' value='{container_version}-{vs_version}']")
                             else:
                                 if not container_version:
                                     print("Unable to lookup current container version.")
