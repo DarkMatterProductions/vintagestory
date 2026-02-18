@@ -188,6 +188,7 @@ object IntegrateAndPublish : BuildType({
         param("build.gameversion", "")
         param("build.version.new", "")
         param("env.GITHUB_LATEST_REF", "")
+        param("build.docker.version", "")
     }
 
     vcs {
@@ -212,7 +213,7 @@ object IntegrateAndPublish : BuildType({
             id = "Git_current_version"
             type = "tc:recipe:jjideenschmiede/github-last-matching-ref@1.0.1"
             executionMode = BuildStep.ExecutionMode.DEFAULT
-            param("env.input_github_access_token", "zxx775d03cbe80d301b")
+            param("env.input_github_access_token", "")
             param("env.input_variable_name", "LATEST_VERSION")
             param("plugin.docker.imagePlatform", "")
             param("plugin.docker.imageId", "")
