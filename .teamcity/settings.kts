@@ -2477,7 +2477,7 @@ object RunTestsAndLinting : BuildType({
             branchFilter = "+:feature/*"
         }
         vcs {
-            branchFilter = "+:refs/heads/fix/*"
+            branchFilter = "+:fix/*"
         }
     }
 
