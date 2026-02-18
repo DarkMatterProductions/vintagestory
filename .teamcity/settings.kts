@@ -259,8 +259,11 @@ object IntegrateAndPublish : BuildType({
                     
                         try:
                             vs_version = get_vs_version(args.unstable)
+                            print(f"Vintage Story Version: {vs_version}")
                             container_version = os.environ["LATEST_VERSION"]
+                            print(f"Container Version: {container_version}")
                             if container_version and vs_version:
+                                print("Outputting TeamCity Parameters")
                                 print(f"##teamcity[setParameter name='build.version.game' value='{vs_version}']")
                                 print(f"##teamcity[setParameter name='build.version.container' value='{container_version}']")
                                 print(f"##teamcity[setParameter name='build.version.dockertag' value='{vs_version}-{container_version}']")
