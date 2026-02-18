@@ -185,9 +185,8 @@ object IntegrateAndPublish : BuildType({
     maxRunningBuildsPerBranch = "*:1"
 
     params {
-        param("build.gameversion", "")
-        param("build.version.new", "")
         param("env.GITHUB_LATEST_REF", "")
+        param("build.version.new", "")
     }
 
     vcs {
