@@ -218,6 +218,20 @@ object IntegrateAndPublish : BuildType({
                 namesAndTags = "registry.dmpsys.in/vintagestory:%env.GITHUB_LATEST_REF%"
             }
         }
+        step {
+            name = "Git current version"
+            id = "Git_current_version"
+            type = "tc:recipe:jjideenschmiede/github-last-matching-ref@1.0.1"
+            executionMode = BuildStep.ExecutionMode.DEFAULT
+            param("env.input_github_access_token", "zxx775d03cbe80d301b")
+            param("env.input_variable_name", "LATEST_VERSION")
+            param("plugin.docker.imagePlatform", "")
+            param("plugin.docker.imageId", "")
+            param("teamcity.step.phase", "")
+            param("env.input_ref", "tags")
+            param("env.input_repository", "DarkMatterProductions/vintagestory")
+            param("plugin.docker.run.parameters", "")
+        }
     }
 
     features {
