@@ -206,20 +206,6 @@ object IntegrateAndPublish : BuildType({
     }
 
     steps {
-        step {
-            name = "Get current version git tag"
-            id = "Git_current_version"
-            type = "tc:recipe:jjideenschmiede/github-last-matching-ref@1.0.1"
-            executionMode = BuildStep.ExecutionMode.DEFAULT
-            param("env.input_github_access_token", "")
-            param("env.input_variable_name", "LATEST_VERSION")
-            param("plugin.docker.imagePlatform", "")
-            param("plugin.docker.imageId", "")
-            param("teamcity.step.phase", "")
-            param("env.input_ref", "tags")
-            param("env.input_repository", "DarkMatterProductions/vintagestory")
-            param("plugin.docker.run.parameters", "")
-        }
         python {
             name = "Generate Docker Tag"
             id = "Get_Vintage_Story_Stable_Version"
