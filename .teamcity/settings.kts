@@ -247,6 +247,11 @@ object IntegrateRelease : BuildType({
 
     vcs {
         root(DslContext.settingsRoot)
+
+        branchFilter = """
+            +:feature/*
+            +:fix/*
+        """.trimIndent()
     }
 
     steps {
