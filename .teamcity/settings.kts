@@ -2503,7 +2503,7 @@ object RunTestsAndLinting : BuildType({
 object HttpsGithubComDarkMatterProductionsVintagestoryRefsHeadsFeaturesWildcard : GitVcsRoot({
     name = "https://github.com/DarkMatterProductions/vintagestory#refs/heads/features/wildcard"
     url = "https://github.com/DarkMatterProductions/vintagestory"
-    branch = "refs/heads/main"
+    branch = "main"
     branchSpec = """
         +:feature/*
         +:fix/*
