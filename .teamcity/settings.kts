@@ -312,8 +312,9 @@ object IntegrateRelease : BuildType({
         root(DslContext.settingsRoot)
 
         branchFilter = """
-            +:feature/*
-            +:fix/*
+            +:refs/heads/feature/*
+            +:refs/heads/fix/*
+            +:<default>
         """.trimIndent()
     }
 
