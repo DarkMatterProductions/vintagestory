@@ -61,7 +61,7 @@ project {
             name = "Github Container Registry"
             url = "https://ghcr.io"
             userName = "darkmatterproductions"
-            password = "credentialsJSON:e66b199b-0088-4b08-9b3f-9aa99b9638ea"
+            password = "credentialsJSON:0c8dc943-38e6-4f43-8f0d-23b9796d30cb"
         }
         dockerRegistry {
             id = "PROJECT_EXT_3"
