@@ -186,8 +186,8 @@ object IntegrateAndPublish : BuildType({
 
     params {
         param("build.version.game", "")
-        param("build.version.dockertag", "")
         param("build.version.container", "")
+        param("build.version.dockertag", "")
         param("env.GITHUB_LATEST_REF", "")
     }
 
@@ -251,7 +251,7 @@ object IntegrateAndPublish : BuildType({
                         args = parser.parse_args()
                     
                         try:
-                            vs_version = get_vs_version(args.stable)
+                            vs_version = get_vs_version(args.unstable)
                             container_version = os.environ["LATEST_VERSION"]
                             if container_version and vs_version:
                             	print(f"##teamcity[setParameter name='build.version.game' value='{vs_version}']")
