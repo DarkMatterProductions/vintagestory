@@ -326,7 +326,7 @@ object IntegrateAndPublish : BuildType({
         }
         dockerRegistryConnections {
             loginToRegistry = on {
-                dockerRegistryId = "PROJECT_EXT_3"
+                dockerRegistryId = "PROJECT_EXT_3,PROJECT_EXT_11"
             }
         }
     }
