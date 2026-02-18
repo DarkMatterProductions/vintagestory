@@ -2429,8 +2429,8 @@ object RunTestsAndLinting : BuildType({
 
         cleanCheckout = true
         branchFilter = """
-            +:feature/*
-            +:fix/*
+            +:refs/heads/feature/*
+            +:refs/heads/fix/*
         """.trimIndent()
     }
 
