@@ -208,7 +208,7 @@ object IntegrateAndPublish : BuildType({
             }
         }
         step {
-            name = "Git current version"
+            name = "Get current version git tag"
             id = "Git_current_version"
             type = "tc:recipe:jjideenschmiede/github-last-matching-ref@1.0.1"
             executionMode = BuildStep.ExecutionMode.DEFAULT
