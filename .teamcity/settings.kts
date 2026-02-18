@@ -221,6 +221,50 @@ object IntegrateAndPublish : BuildType({
             param("env.input_repository", "DarkMatterProductions/vintagestory")
             param("plugin.docker.run.parameters", "")
         }
+        python {
+            name = "Get Vintage Story Stable Version"
+            id = "Get_Vintage_Story_Stable_Version"
+            environment = pipenv {
+                arguments = "--python 3.11"
+            }
+            command = script {
+                content = """
+                    import requests
+                    
+                    
+                    class ApiQueryException(Exception):
+                        pass
+                    
+                    
+                    def get_vs_version(stable):
+                        ${TQ}Get the Vintage Story version from the Official HTTP API.$TQ
+                        url = "https://api.vintagestory.at/lateststable.txt"
+                        if not stable:
+                            url = "https://api.vintagestory.at/latestunstable.txt"
+                        try:
+                            response = requests.get(url)
+                            response.raise_for_status()
+                            return response.text.strip()
+                        except requests.RequestException as e:
+                            print(f"Error fetching Vintage Story version from API: {e}")
+                            raise ApiQueryException(f"Failed to fetch Vintage Story version from API: {e}")
+                    
+                    
+                    if __name__ == "__main__":
+                        import argparse
+                    
+                        parser = argparse.ArgumentParser(description="Get the latest Vintage Story version from the Official HTTP API.")
+                        parser.add_argument("--unstable", action="store_false", help="Get the latest unstable version instead of the latest stable version.")
+                        args = parser.parse_args()
+                    
+                        try:
+                            version = get_vs_version(args.stable)
+                            print(f"##teamcity[setParameter name='build.gameversion' value='{version}']")
+                        except ApiQueryException as e:
+                            print(e)
+                """.trimIndent()
+            }
+        }
     }
 
     features {
