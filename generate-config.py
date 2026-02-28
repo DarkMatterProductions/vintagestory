@@ -73,7 +73,7 @@ class VintageStoryConfig:
         """Generate config and apply overrides from environment variables."""
         if "VS_CFG_ALLOW_CREATIVE_MODE" in os.environ:
             print("Allowing Creative Mode")
-            self.config["WorldConfig"]["AllowCreativeMode"] = os.environ.pop("VS_CFG_ALLOW_CREATIVE_MODE").lower() in ("1", "true", "yes")
+            self.config["WorldConfig"]["AllowCreativeMode"] = self.convert_value(os.environ.pop("VS_CFG_ALLOW_CREATIVE_MODE").lower(), "boolean")
         overrides = {self.env_setting_map[env_key][0]: self.convert_value(os.environ[env_key], self.env_setting_map[env_key][1]) for env_key in os.environ.keys() if env_key.startswith("VS_CFG_")}
         self.config.update(overrides)
         if overrides:
