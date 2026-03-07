@@ -127,7 +127,7 @@ object BuildFeature_1 : BuildType({
             name = "Generate Version"
             id = "python_runner"
             environment = pipenv {
-                arguments = "pyyaml"
+                arguments = "--python 3.11 pyyaml PyJWT"
             }
             command = file {
                 filename = "semver.py"
