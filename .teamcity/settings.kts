@@ -120,7 +120,7 @@ object BuildFeature_1 : BuildType({
             scriptContent = """
                 #!/usr/bin/env bash
                 
-                pipenv install pyyaml
+                python3 -m pip install -y pipenv
             """.trimIndent()
         }
         python {
