@@ -129,7 +129,7 @@ object BuildFeature_1 : BuildType({
             }
             command = file {
                 filename = "semver.py"
-                scriptArguments = "--name vsvanillaplus --dev --no-build"
+                scriptArguments = "--name vsvanillaplus --dev --vs-version %build.vsversion% --no-build"
             }
         }
         dockerCommand {
