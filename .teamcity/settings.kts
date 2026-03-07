@@ -98,6 +98,7 @@ object BuildFeature_1 : BuildType({
 
     params {
         param("build.version.docker.new", "")
+        text("build.vsversion", "", label = "Vintage Story Version", description = "Version of Vintage Story Dedicated Server", display = ParameterDisplay.PROMPT, allowEmpty = true)
     }
 
     outputParams {
