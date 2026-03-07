@@ -165,6 +165,7 @@ object BuildFeature_1 : BuildType({
         script {
             name = "Cleanup Python"
             id = "Cleanup_Python"
+            enabled = false
             scriptContent = """
                 #!/usr/bin/env bash
                 
