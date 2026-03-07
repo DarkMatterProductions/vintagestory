@@ -141,6 +141,7 @@ object BuildFeature_1 : BuildType({
                 }
                 platform = DockerCommandStep.ImagePlatform.Linux
                 namesAndTags = "registry.dmpsys.in/vintagestory:%build.version.docker.new%"
+                commandArgs = "-e VS_VERSION=%build.vsversion%"
             }
         }
         dockerCommand {
