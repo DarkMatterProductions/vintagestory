@@ -18,8 +18,10 @@ ENV VSPATH=${VSPATH}
 ENV DATAPATH=${DATAPATH}
 
 ARG VS_VERSION=1.21.6
+ARG VS_VERSION_STATE=stable
 ARG DOTNET_VERSION=8.0
 ENV VS_VERSION=${VS_VERSION}
+ENV VS_VERSION_STATE=${VS_VERSION_STATE}
 ENV DOTNET_VERSION=${DOTNET_VERSION}
 
 LABEL org.opencontainers.image.source=https://github.com/DarkMatterProductions/vintagestory
@@ -97,7 +99,7 @@ RUN groupadd -g ${GID_NUMBER} ${USERNAME} && \
 WORKDIR ${HOMEPATH}
 
 # Install Vintage Story server
-RUN wget -P ${VSPATH} https://cdn.vintagestory.at/gamefiles/stable/vs_server_linux-x64_${VS_VERSION}.tar.gz && \
+RUN wget -P ${VSPATH} https://cdn.vintagestory.at/gamefiles/${VS_VERSION_STATE}/vs_server_linux-x64_${VS_VERSION}.tar.gz && \
     tar -C ${VSPATH} -xvzf ${VSPATH}/vs_server_linux-x64_${VS_VERSION}.tar.gz && \
     rm ${VSPATH}/vs_server_linux-x64_${VS_VERSION}.tar.gz && \
     chown -R ${USERNAME}: ${HOMEPATH}
