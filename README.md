@@ -5,7 +5,6 @@
 
 ![Vintage Story Stable Version](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fapi.vintagestory.at%2Flateststable.txt&search=(%5Cd%2B).(%5Cd%2B).(%5Cd%2B)(.*)&style=flat&label=Vintage%20Story%20Stable%20Version&color=%23029600)
 ![Vintage Story Unstable Version](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fapi.vintagestory.at%2Flatestunstable.txt&search=(%5Cd%2B).(%5Cd%2B).(%5Cd%2B)(.*)&style=flat&label=Vintage%20Story%20Unstable%20Version&color=FCF765)
-![Vintage Story Preview Release Version](https://img.shields.io/badge/Vintage_Story_Preview_Release_Version-1.22.0--pre.2-E32424?style=flat)
 
 
 [![Docker Stars](https://img.shields.io/docker/stars/ralnoc/vintagestory?style=flat&label=Docker%20Stars&color=purple)](https://hub.docker.com/r/ralnoc/vintagestory)
@@ -15,6 +14,13 @@
 - [Docker Image References](#docker-image-references)
 - [Support](#Support)
 - [Quick Start](#quick-start)
+  - [Basic Server](#basic-server)
+  - [Server with Configuration](#server-with-configuration)
+- [Security Best Practices](#security-best-practices)
+- [Data Persistence](#data-persistence)
+  - [Mounting the Data Volume](#mounting-the-data-volume)
+  - [Recovering data from within the container](#recovering-data-from-within-the-container)
+- [Upgrading](#upgrading)
 - [Container Commands](#container-commands)
 - [Environment Variables Reference](#environment-variables-reference)
    - [General Logging Configuration](#general-logging-configuration)
@@ -27,7 +33,6 @@
 - [Building the Image](#building-the-image)
 
 ---
-
 
 ## About Vintage Story
 
@@ -49,7 +54,7 @@ genuine depth beyond the Minecraft formula.
 
 ## Dedicated Server Docker Image
 Vintage Story Dedicated Server Docker Image, built on Ubuntu 24.04 is based on the official Vintage Story server 
-installation instructions, and extracted from server.sh for better Docker compatibility.
+installation instructions and extracted from server.sh for better Docker compatibility.
 
 Official dedicated server guide: https://wiki.vintagestory.at/Guide:Dedicated_Server
 
@@ -88,7 +93,7 @@ docker run -d \
 ```
 
 ### Server with Configuration
-Run with custom server name and settings:
+Run with a custom server name and settings:
 
 ```bash
 docker run -d \
@@ -108,6 +113,61 @@ docker run -d \
 
 ---
 
+## Security Best Practices
+- **Always change default passwords** in production environments
+- Change `VS_RCON_SERVER_CFG_PASSWORD`
+- Change `VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY`
+- Change `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_PASSWORD`
+- Use strong, unique passwords for each setting
+- RCON is an unencrypted protocol, always use some form of encryption or limit to localhost access. The RCON WebUI was created to address this.
+
+## Data Persistence
+### Mounting the Data Volume
+Always mount the `/vintagestory/data` volume to a persistent location on your host. This ensures:
+- World data is preserved across container updates
+- Server configurations persist
+- Mods are retained
+- Player data is not lost
+
+### Recovering data from within the container
+If you inadvertently started your game without mounting the `/vintagestory/data` volume, you can extract your data from the container using the following command:
+```bash
+docker cp vintagestory-server:/vintagestory/data /path/you/want/to/save/your/vs/data
+```
+This will allow you to extract your data, and start a new container mounting the volume to the new path you have saved your data to.
+
+## Upgrading
+When using `ghcr.io/darkmatterproductions/vintagestory:latest` or `ralnoc/vintagestory:latest`, the image always installs the latest version of Vintage Story.
+<br/>**⚠️ IMPORTANT: If you need to extract your game data from within the container, please refer to the "[Recovering data from within the container](#recovering-data-from-within-the-container)" section above before proceeding with the upgrade steps.**
+
+To upgrade:
+
+```bash
+# Stop and remove old container
+docker stop vintagestory-server
+docker rm vintagestory-server # Ensure you have your data backed up or mounted to a volume before removing the container
+
+# Pull latest image
+docker pull ghcr.io/darkmatterproductions/vintagestory:latest
+
+# Start new container with same volumes
+docker run -d \
+  --name vintagestory-server \
+  -p 42420:42420/tcp \
+  -p 42420:42420/udp \
+  -v /path/to/your/vs/data:/vintagestory/data \
+  --restart unless-stopped \
+  ghcr.io/darkmatterproductions/vintagestory:latest
+```
+
+Or with Docker Compose:
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+---
+
 ## Container Commands
 
 ### Running the Container
@@ -118,7 +178,12 @@ docker run -d \
   --name vintagestory-server \
   -p 42420:42420/tcp \
   -p 42420:42420/udp \
+  -p 5000:5000/tcp \
   -v /path/to/your/vs/data:/vintagestory/data \
+  -e VS_CFG_SERVER_NAME="My Awesome Server" \
+  -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
+  -e VS_CFG_MAX_CLIENTS=16 \
+  -e VS_CFG_SERVER_PASSWORD="mypassword" \
   --restart unless-stopped \
   ghcr.io/darkmatterproductions/vintagestory:latest
 ```
@@ -131,19 +196,10 @@ docker run -d \
   -p 42420:42420/udp \
   -p 5000:5000/tcp \
   -v /path/to/your/vs/data:/vintagestory/data \
-  -e VS_RCON_ENABLED=true \
-  --restart unless-stopped \
-  ghcr.io/darkmatterproductions/vintagestory:latest
-```
-
-#### Run with RCON Server
-```bash
-docker run -d \
-  --name vintagestory-server \
-  -p 42420:42420/tcp \
-  -p 42420:42420/udp \
-  -p 42425:42425/tcp \
-  -v /path/to/your/vs/data:/vintagestory/data \
+  -e VS_CFG_SERVER_NAME="My Awesome Server" \
+  -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
+  -e VS_CFG_MAX_CLIENTS=16 \
+  -e VS_CFG_SERVER_PASSWORD="mypassword" \
   -e VS_RCON_ENABLED=true \
   --restart unless-stopped \
   ghcr.io/darkmatterproductions/vintagestory:latest
@@ -208,19 +264,33 @@ docker inspect vintagestory-server
 
 ## Environment Variables Reference
 
+### Boolean Values
+Boolean environment variables accept the following values (case-insensitive):
+- **True**: `true`, `1`, `yes`, `on`
+- **False**: `false`, `0`, `no`, `off`
+
 ### General Logging Configuration
 
 Control logging behavior for the Vintage Story server.
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `ENABLE_DEBUG_LOGGING` | Boolean | `false` | Enables debug level logging for troubleshooting |
-| `ENABLE_CHAT_LOGGING` | Boolean | `false` | Enables chat message logging to server logs |
+| Variable                  | Type    | Default | Description                                         |
+|---------------------------|---------|---------|-----------------------------------------------------|
+| `ENABLE_DEBUG_LOGGING`    | Boolean | `false` | Enables debug level logging for troubleshooting     |
+| `ENABLE_CHAT_LOGGING`     | Boolean | `false` | Enables chat message logging to server logs         |
 | `FORCE_REGENERATE_CONFIG` | Boolean | `false` | Forces regeneration of serverconfig.json on startup |
 
 **Example:**
 ```bash
 docker run -d \
+  --name vintagestory-server \
+  -p 42420:42420/tcp \
+  -p 42420:42420/udp \
+  -p 5000:5000/tcp \
+  -v /path/to/your/vs/data:/vintagestory/data \
+  -e VS_CFG_SERVER_NAME="My Awesome Server" \
+  -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
+  -e VS_CFG_MAX_CLIENTS=16 \
+  -e VS_CFG_SERVER_PASSWORD="mypassword" \
   -e ENABLE_DEBUG_LOGGING=true \
   -e ENABLE_CHAT_LOGGING=true \
   ghcr.io/darkmatterproductions/vintagestory:latest
@@ -232,38 +302,42 @@ docker run -d \
 
 These variables configure the Vintage Story game server and map to settings in `serverconfig.json`. All variables with the `VS_CFG_` prefix override corresponding server settings.
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_CFG_SERVER_NAME` | String | _(from server-config.yaml)_ | The name of your server as displayed in the server list |
-| `VS_CFG_SERVER_URL` | String | _(from server-config.yaml)_ | URL to your server's website or information page |
-| `VS_CFG_SERVER_DESCRIPTION` | String | _(from server-config.yaml)_ | Server description shown in the server list |
-| `VS_CFG_WELCOME_MESSAGE` | String | _(from server-config.yaml)_ | Message displayed to players when they join |
-| `VS_CFG_ALLOW_CREATIVE_MODE` | Boolean | _(from server-config.yaml)_ | Whether creative mode is allowed (true/false/1/0/yes) |
-| `VS_CFG_SERVER_IP` | String | _(from server-config.yaml)_ | IP address the server binds to (0.0.0.0 for all interfaces) |
-| `VS_CFG_SERVER_PORT` | Integer | _(from server-config.yaml)_ | Port number the game server listens on (default: 42420) |
-| `VS_CFG_SERVER_UPNP` | Boolean | _(from server-config.yaml)_ | Enable UPnP port forwarding (true/false/1/0/yes) |
-| `VS_CFG_SERVER_COMPRESS_PACKETS` | Boolean | _(from server-config.yaml)_ | Enable packet compression to reduce bandwidth |
-| `VS_CFG_ADVERTISE_SERVER` | Boolean | _(from server-config.yaml)_ | Advertise server in the public server list |
-| `VS_CFG_MAX_CLIENTS` | Integer | _(from server-config.yaml)_ | Maximum number of concurrent players allowed |
-| `VS_CFG_PASS_TIME_WHEN_EMPTY` | Boolean | _(from server-config.yaml)_ | Whether time passes when no players are online |
-| `VS_CFG_SERVER_PASSWORD` | String | _(from server-config.yaml)_ | Password required to join the server (empty for no password) |
-| `VS_CFG_MAX_CHUNK_RADIUS` | Integer | _(from server-config.yaml)_ | Maximum chunk view distance allowed for clients |
-| `VS_CFG_SERVER_LANGUAGE` | String | _(from server-config.yaml)_ | Server language code (e.g., "en", "de", "fr") |
-| `VS_CFG_ENFORCE_WHITELIST` | Integer | _(from server-config.yaml)_ | Whitelist enforcement mode (0=disabled, 1=enabled) |
-| `VS_CFG_ANTIABUSE` | Integer | _(from server-config.yaml)_ | Anti-abuse protection level (0=disabled, 1=enabled) |
-| `VS_CFG_ALLOW_PVP` | Boolean | _(from server-config.yaml)_ | Allow player-vs-player combat |
-| `VS_CFG_HOSTED_MODE` | Boolean | _(from server-config.yaml)_ | Enable hosted mode restrictions |
-| `VS_CFG_HOSTED_MODE_ALLOW_MODS` | Boolean | _(from server-config.yaml)_ | Allow mods in hosted mode |
+| Variable                         | Type    | Default                     | Description                                                  |
+|----------------------------------|---------|-----------------------------|--------------------------------------------------------------|
+| `VS_CFG_SERVER_NAME`             | String  | _(from server-config.yaml)_ | The name of your server as displayed in the server list      |
+| `VS_CFG_SERVER_URL`              | String  | _(from server-config.yaml)_ | URL to your server's website or information page             |
+| `VS_CFG_SERVER_DESCRIPTION`      | String  | _(from server-config.yaml)_ | Server description shown in the server list                  |
+| `VS_CFG_WELCOME_MESSAGE`         | String  | _(from server-config.yaml)_ | Message displayed to players when they join                  |
+| `VS_CFG_ALLOW_CREATIVE_MODE`     | Boolean | _(from server-config.yaml)_ | Whether creative mode is allowed (true/false/1/0/yes)        |
+| `VS_CFG_SERVER_IP`               | String  | _(from server-config.yaml)_ | IP address the server binds to (0.0.0.0 for all interfaces)  |
+| `VS_CFG_SERVER_PORT`             | Integer | _(from server-config.yaml)_ | Port number the game server listens on (default: 42420)      |
+| `VS_CFG_SERVER_UPNP`             | Boolean | _(from server-config.yaml)_ | Enable UPnP port forwarding (true/false/1/0/yes)             |
+| `VS_CFG_SERVER_COMPRESS_PACKETS` | Boolean | _(from server-config.yaml)_ | Enable packet compression to reduce bandwidth                |
+| `VS_CFG_ADVERTISE_SERVER`        | Boolean | _(from server-config.yaml)_ | Advertise server in the public server list                   |
+| `VS_CFG_MAX_CLIENTS`             | Integer | _(from server-config.yaml)_ | Maximum number of concurrent players allowed                 |
+| `VS_CFG_PASS_TIME_WHEN_EMPTY`    | Boolean | _(from server-config.yaml)_ | Whether time passes when no players are online               |
+| `VS_CFG_SERVER_PASSWORD`         | String  | _(from server-config.yaml)_ | Password required to join the server (empty for no password) |
+| `VS_CFG_MAX_CHUNK_RADIUS`        | Integer | _(from server-config.yaml)_ | Maximum chunk view distance allowed for clients              |
+| `VS_CFG_SERVER_LANGUAGE`         | String  | _(from server-config.yaml)_ | Server language code (e.g., "en", "de", "fr")                |
+| `VS_CFG_ENFORCE_WHITELIST`       | Boolean | _(from server-config.yaml)_ | Whitelist enforcement mode                                   |
+| `VS_CFG_ANTIABUSE`               | Integer | _(from server-config.yaml)_ | Anti-abuse protection level (0=disabled, 1=enabled)          |
+| `VS_CFG_ALLOW_PVP`               | Boolean | _(from server-config.yaml)_ | Allow player-vs-player combat                                |
+| `VS_CFG_HOSTED_MODE`             | Boolean | _(from server-config.yaml)_ | Enable hosted mode restrictions                              |
+| `VS_CFG_HOSTED_MODE_ALLOW_MODS`  | Boolean | _(from server-config.yaml)_ | Allow mods in hosted mode                                    |
 
 **Example:**
 ```bash
 docker run -d \
+  --name vintagestory-server \
+  -p 42420:42420/tcp \
+  -p 42420:42420/udp \
+  -p 5000:5000/tcp \
+  -v /path/to/your/vs/data:/vintagestory/data \
   -e VS_CFG_SERVER_NAME="My Awesome Server" \
   -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
   -e VS_CFG_MAX_CLIENTS=16 \
   -e VS_CFG_SERVER_PASSWORD="mypassword" \
-  -e VS_CFG_ALLOW_PVP=false \
-  -e VS_CFG_ADVERTISE_SERVER=true \
+  -e VS_RCON_ENABLED=true \
   ghcr.io/darkmatterproductions/vintagestory:latest
 ```
 
@@ -275,18 +349,28 @@ docker run -d \
 
 Control which mods are downloaded and installed on the server.
 
-| Variable | Type | Default      | Description |
-|----------|------|--------------|-------------|
-| `VS_MODS` | String | `""` | Comma-separated list of mod download paths from mods.vintagestory.at<br>Format: `modid/filename.zip,modid2/filename2.zip` |
-| `VS_RCON_ENABLED` | Boolean | `true` | Set to `true` to enable RCON functionality and download the RCON mod |
-| `VS_RCON_MOD_VERSION` | String | `2.0.0` | Version of the VintageRCon mod to download when RCON is enabled |
+| Variable              | Type    | Default | Description                                                                                                               |
+|-----------------------|---------|---------|---------------------------------------------------------------------------------------------------------------------------|
+| `VS_MODS`             | String  | `""`    | Comma-separated list of mod download paths from mods.vintagestory.at<br>Format: `modid/filename.zip,modid2/filename2.zip` |
+| `VS_RCON_ENABLED`     | Boolean | `false` | Set to `true` to enable RCON functionality and download the RCON mod                                                      |
+| `VS_RCON_MOD_VERSION` | String  | `2.0.2` | Version of the VintageRCon mod to download when RCON is enabled                                                           |
 
 **Example:**
 ```bash
 docker run -d \
+  --name vintagestory-server \
+  -p 42420:42420/tcp \
+  -p 42420:42420/udp \
+  -p 5000:5000/tcp \
+  -v /path/to/your/vs/data:/vintagestory/data \
+  -e VS_CFG_SERVER_NAME="My Awesome Server" \
+  -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
+  -e VS_CFG_MAX_CLIENTS=16 \
+  -e VS_CFG_SERVER_PASSWORD="mypassword" \
+  -e VS_RCON_ENABLED=true \
   -e VS_MODS="72291/vsvanillaplus_0.1.5.zip,75006/BetterRuinsv0.5.7.zip,73792/configlib_1.10.14.zip" \
   -e VS_RCON_ENABLED=true \
-  -e VS_RCON_MOD_VERSION="2.0.0" \
+  -e VS_RCON_MOD_VERSION="2.0.2" \
   ghcr.io/darkmatterproductions/vintagestory:latest
 ```
 
@@ -296,18 +380,26 @@ docker run -d \
 
 Configure the RCON server connection settings. These control how the RCON web client connects to the Vintage Story server's RCON interface.
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_SERVER_CFG_PORT` | Integer | `42425` | Port number the Vintage Story RCON server listens on |
-| `VS_RCON_SERVER_CFG_IP` | String | `127.0.0.1` | IP address of the Vintage Story RCON server |
-| `VS_RCON_SERVER_CFG_PASSWORD` | String | `changeme` | Password for authenticating to the RCON server<br>**⚠️ CHANGE IN PRODUCTION** |
-| `VS_RCON_SERVER_CFG_TIMEOUT` | Integer | `20` | Connection timeout in seconds |
-| `VS_RCON_SERVER_CFG_MAXCONNECTIONS` | Integer | `10` | Maximum number of concurrent RCON connections allowed |
+| Variable                            | Type    | Default     | Description                                                                   |
+|-------------------------------------|---------|-------------|-------------------------------------------------------------------------------|
+| `VS_RCON_SERVER_CFG_PORT`           | Integer | `42425`     | Port number the Vintage Story RCON server listens on                          |
+| `VS_RCON_SERVER_CFG_IP`             | String  | `127.0.0.1` | IP address of the Vintage Story RCON server                                   |
+| `VS_RCON_SERVER_CFG_PASSWORD`       | String  | `changeme`  | Password for authenticating to the RCON server<br>**⚠️ CHANGE IN PRODUCTION** |
+| `VS_RCON_SERVER_CFG_TIMEOUT`        | Integer | `20`        | Connection timeout in seconds                                                 |
+| `VS_RCON_SERVER_CFG_MAXCONNECTIONS` | Integer | `10`        | Maximum number of concurrent RCON connections allowed                         |
 
 **Example:**
 ```bash
 docker run -d \
-  -p 42425:42425/tcp \
+  --name vintagestory-server \
+  -p 42420:42420/tcp \
+  -p 42420:42420/udp \
+  -p 5000:5000/tcp \
+  -v /path/to/your/vs/data:/vintagestory/data \
+  -e VS_CFG_SERVER_NAME="My Awesome Server" \
+  -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
+  -e VS_CFG_MAX_CLIENTS=16 \
+  -e VS_CFG_SERVER_PASSWORD="mypassword" \
   -e VS_RCON_ENABLED=true \
   -e VS_RCON_SERVER_CFG_PORT=42425 \
   -e VS_RCON_SERVER_CFG_PASSWORD="secure-rcon-password" \
@@ -325,40 +417,40 @@ with the server's RCON interface, so the RCON server must be enabled and properl
 
 #### Server Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SERVER_HOST` | String | `0.0.0.0` | Host address the web client listens on (0.0.0.0 for all interfaces) |
-| `VS_RCON_CLIENT_CFG_SERVER_PORT` | Integer | `5000` | Port number the web client listens on |
-| `VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY` | String | `vintage-story-rcon-...` | Secret key for session encryption<br>**⚠️ CHANGE IN PRODUCTION** |
+| Variable                               | Type    | Default                  | Description                                                         |
+|----------------------------------------|---------|--------------------------|---------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_SERVER_HOST`       | String  | `0.0.0.0`                | Host address the web client listens on (0.0.0.0 for all interfaces) |
+| `VS_RCON_CLIENT_CFG_SERVER_PORT`       | Integer | `5000`                   | Port number the web client listens on                               |
+| `VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY` | String  | `vintage-story-rcon-...` | Secret key for session encryption<br>**⚠️ CHANGE IN PRODUCTION**    |
 
 #### RCON Connection Settings
 
-| Variable | Type | Default | Description                                                                                                              |
-|----------|------|---------|--------------------------------------------------------------------------------------------------------------------------|
-| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_HOST` | String | `localhost` | Default RCON host to connect to                                                                                          |
-| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_PORT` | Integer | `42425` | Default RCON port to connect to                                                                                          |
-| `VS_RCON_CLIENT_CFG_RCON_PASSWORD` | String | `changeme` | RCON password for authentication<br>**⚠️ CHANGE IN PRODUCTION**<br><i>Value must match `VS_RCON_SERVER_CFG_PASSWORD`</i> |
-| `VS_RCON_CLIENT_CFG_RCON_LOCKED_ADDRESS` | Boolean | `false` | Lock RCON connection to default host/port (true/false)                                                                   |
-| `VS_RCON_CLIENT_CFG_RCON_TIMEOUT` | Integer | `10` | RCON connection timeout in seconds                                                                                       |
-| `VS_RCON_CLIENT_CFG_RCON_MAX_MESSAGE_SIZE` | Integer | `4096` | Maximum RCON message size in bytes                                                                                       |
+| Variable                                   | Type    | Default     | Description                                                                                                              |
+|--------------------------------------------|---------|-------------|--------------------------------------------------------------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_HOST`     | String  | `localhost` | Default RCON host to connect to<br><i>Value must match `VS_RCON_SERVER_CFG_IP`</i>                                       |
+| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_PORT`     | Integer | `42425`     | Default RCON port to connect to<br><i>Value must match `VS_RCON_SERVER_CFG_PORT`</i>                                     |
+| `VS_RCON_CLIENT_CFG_RCON_PASSWORD`         | String  | `changeme`  | RCON password for authentication<br>**⚠️ CHANGE IN PRODUCTION**<br><i>Value must match `VS_RCON_SERVER_CFG_PASSWORD`</i> |
+| `VS_RCON_CLIENT_CFG_RCON_LOCKED_ADDRESS`   | Boolean | `false`     | Lock RCON connection to default host/port (true/false)                                                                   |
+| `VS_RCON_CLIENT_CFG_RCON_TIMEOUT`          | Integer | `10`        | RCON connection timeout in seconds                                                                                       |
+| `VS_RCON_CLIENT_CFG_RCON_MAX_MESSAGE_SIZE` | Integer | `4096`      | Maximum RCON message size in bytes                                                                                       |
 
 #### Security Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_REQUIRE_AUTH` | Boolean | `true` | Require authentication to access the web client |
-| `VS_RCON_CLIENT_CFG_SECURITY_TRADITIONAL_LOGIN_ENABLED` | Boolean | `true` | Enable traditional username/password login |
-| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_USERNAME` | String | `admin` | Default username for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
-| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_PASSWORD` | String | `changeme` | Default password for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
-| `VS_RCON_CLIENT_CFG_SECURITY_MAX_LOGIN_ATTEMPTS` | Integer | `5` | Maximum login attempts before lockout |
-| `VS_RCON_CLIENT_CFG_SECURITY_LOCKOUT_DURATION` | Integer | `300` | Account lockout duration in seconds after max attempts |
+| Variable                                                | Type    | Default    | Description                                                           |
+|---------------------------------------------------------|---------|------------|-----------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_REQUIRE_AUTH`              | Boolean | `true`     | Require authentication to access the web client                       |
+| `VS_RCON_CLIENT_CFG_SECURITY_TRADITIONAL_LOGIN_ENABLED` | Boolean | `true`     | Enable traditional username/password login                            |
+| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_USERNAME`          | String  | `admin`    | Default username for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
+| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_PASSWORD`          | String  | `changeme` | Default password for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
+| `VS_RCON_CLIENT_CFG_SECURITY_MAX_LOGIN_ATTEMPTS`        | Integer | `5`        | Maximum login attempts before lockout                                 |
+| `VS_RCON_CLIENT_CFG_SECURITY_LOCKOUT_DURATION`          | Integer | `300`      | Account lockout duration in seconds after max attempts                |
 
 #### OAuth Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_ENABLED` | Boolean | `true` | Enable OAuth authentication providers |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_AUTHORIZED_EMAILS` | String | `admin@example.com,...` | Comma-separated list of authorized email addresses for OAuth login |
+| Variable                                              | Type    | Default                 | Description                                                        |
+|-------------------------------------------------------|---------|-------------------------|--------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_ENABLED`           | Boolean | `true`                  | Enable OAuth authentication providers                              |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_AUTHORIZED_EMAILS` | String  | `admin@example.com,...` | Comma-separated list of authorized email addresses for OAuth login |
 
 **⚠️ Important Note:** If you do not have access to a reverse proxy (such as NGINX or HAProxy) that can handle SSL/TLS
 certificates and port mapping, you should **disable OAuth** and use traditional username/password authentication
@@ -377,20 +469,20 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ###### Provider Registration Links
 
-| Provider | Registration URL |
-|----------|-----------------|
-| Google   | https://console.cloud.google.com/ |
-| Facebook | https://developers.facebook.com/ |
+| Provider | Registration URL                       |
+|----------|----------------------------------------|
+| Google   | https://console.cloud.google.com/      |
+| Facebook | https://developers.facebook.com/       |
 | GitHub   | https://github.com/settings/developers |
-| Apple    | https://developer.apple.com/account/ |
+| Apple    | https://developer.apple.com/account/   |
 
 ##### Google OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_ENABLED` | Boolean | `true` | Enable Google OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_ID` | String | `your-google-client-id...` | Google OAuth client ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_SECRET` | String | `your-google-client-secret` | Google OAuth client secret |
+| Variable                                                 | Type    | Default                     | Description                |
+|----------------------------------------------------------|---------|-----------------------------|----------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_ENABLED`       | Boolean | `true`                      | Enable Google OAuth login  |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_ID`     | String  | `your-google-client-id...`  | Google OAuth client ID     |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_SECRET` | String  | `your-google-client-secret` | Google OAuth client secret |
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
@@ -403,11 +495,11 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ##### Facebook OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_ENABLED` | Boolean | `false` | Enable Facebook OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_ID` | String | `your-facebook-app-id` | Facebook OAuth app ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_SECRET` | String | `your-facebook-app-secret` | Facebook OAuth app secret |
+| Variable                                                   | Type    | Default                    | Description                 |
+|------------------------------------------------------------|---------|----------------------------|-----------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_ENABLED`       | Boolean | `false`                    | Enable Facebook OAuth login |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_ID`     | String  | `your-facebook-app-id`     | Facebook OAuth app ID       |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_SECRET` | String  | `your-facebook-app-secret` | Facebook OAuth app secret   |
 
 1. Go to [Facebook Developers](https://developers.facebook.com/)
 2. Create a new app or select an existing one
@@ -418,11 +510,11 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ##### GitHub OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_ENABLED` | Boolean | `false` | Enable GitHub OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_ID` | String | `your-github-client-id` | GitHub OAuth client ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_SECRET` | String | `your-github-client-secret` | GitHub OAuth client secret |
+| Variable                                                 | Type    | Default                     | Description                |
+|----------------------------------------------------------|---------|-----------------------------|----------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_ENABLED`       | Boolean | `false`                     | Enable GitHub OAuth login  |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_ID`     | String  | `your-github-client-id`     | GitHub OAuth client ID     |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_SECRET` | String  | `your-github-client-secret` | GitHub OAuth client secret |
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
@@ -432,30 +524,34 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ##### Apple OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_ENABLED` | Boolean | `false` | Enable Apple OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_ID` | String | `your-apple-service-id` | Apple OAuth service ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_SECRET` | String | `your-apple-client-secret` | Apple OAuth client secret |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_TEAM_ID` | String | `your-apple-team-id` | Apple Developer Team ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_KEY_ID` | String | `your-apple-key-id` | Apple OAuth key ID |
+| Variable                                                | Type    | Default                    | Description               |
+|---------------------------------------------------------|---------|----------------------------|---------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_ENABLED`       | Boolean | `false`                    | Enable Apple OAuth login  |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_ID`     | String  | `your-apple-service-id`    | Apple OAuth service ID    |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_SECRET` | String  | `your-apple-client-secret` | Apple OAuth client secret |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_TEAM_ID`       | String  | `your-apple-team-id`       | Apple Developer Team ID   |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_KEY_ID`        | String  | `your-apple-key-id`        | Apple OAuth key ID        |
 
 #### Logging Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_LOGGING_LOG_COMMANDS` | Boolean | `true` | Log RCON commands to file |
-| `VS_RCON_CLIENT_CFG_LOGGING_LOG_FILE` | String | `logs/rcon.log` | Path to RCON client log file |
-| `VS_RCON_CLIENT_CFG_LOGGING_LOG_LEVEL` | String | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
+| Variable                                  | Type    | Default         | Description                                           |
+|-------------------------------------------|---------|-----------------|-------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_LOGGING_LOG_COMMANDS` | Boolean | `true`          | Log RCON commands to file                             |
+| `VS_RCON_CLIENT_CFG_LOGGING_LOG_FILE`     | String  | `logs/rcon.log` | Path to RCON client log file                          |
+| `VS_RCON_CLIENT_CFG_LOGGING_LOG_LEVEL`    | String  | `INFO`          | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
 
 **Example (RCON with OAuth):**
 ```bash
 docker run -d \
+  --name vintagestory-server \
   -p 42420:42420/tcp \
   -p 42420:42420/udp \
-  -p 42425:42425/tcp \
   -p 5000:5000/tcp \
   -v /path/to/your/vs/data:/vintagestory/data \
+  -e VS_CFG_SERVER_NAME="My Awesome Server" \
+  -e VS_CFG_SERVER_DESCRIPTION="A friendly survival server" \
+  -e VS_CFG_MAX_CLIENTS=16 \
+  -e VS_CFG_SERVER_PASSWORD="mypassword" \
   -e VS_RCON_ENABLED=true \
   -e VS_RCON_SERVER_CFG_PASSWORD="my-secure-rcon-password" \
   -e VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY="my-unique-secret-key-change-me" \
@@ -533,8 +629,10 @@ services:
     environment:
       - ENABLE_DEBUG_LOGGING=false
       - ENABLE_CHAT_LOGGING=true
-      - VS_CFG_SERVER_NAME=My Vintage Story Server
+      - VS_CFG_SERVER_NAME="My Awesome Server"
+      - VS_CFG_SERVER_DESCRIPTION="A friendly survival server"
       - VS_CFG_MAX_CLIENTS=16
+      - VS_CFG_SERVER_PASSWORD="mypassword"
     restart: unless-stopped
 ```
 
@@ -555,15 +653,15 @@ services:
     ports:
       - "42420:42420/tcp"
       - "42420:42420/udp"
-      - "42425:42425/tcp"
       - "5000:5000/tcp"
     volumes:
       - /path/to/your/vs/data:/vintagestory/data
     environment:
       # Server Configuration
-      - VS_CFG_SERVER_NAME=My Modded Server
-      - VS_CFG_MAX_CLIENTS=20
-      - VS_CFG_SERVER_PASSWORD=mypassword
+      - VS_CFG_SERVER_NAME="My Awesome Server"
+      - VS_CFG_SERVER_DESCRIPTION="A friendly survival server"
+      - VS_CFG_MAX_CLIENTS=16
+      - VS_CFG_SERVER_PASSWORD="mypassword"
       
       # RCON Mod
       - VS_RCON_ENABLED=true
@@ -612,7 +710,10 @@ services:
       - /path/to/your/vs/data:/vintagestory/data
     environment:
       - ENABLE_DEBUG_LOGGING=true
-      - VS_CFG_SERVER_NAME=My Custom Build Server
+      - VS_CFG_SERVER_NAME="My Awesome Server"
+      - VS_CFG_SERVER_DESCRIPTION="A friendly survival server"
+      - VS_CFG_MAX_CLIENTS=16
+      - VS_CFG_SERVER_PASSWORD="mypassword"
     restart: unless-stopped
 ```
 
@@ -650,57 +751,7 @@ docker build \
 
 ### Build Arguments
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `VS_VERSION` | Version of Vintage Story to install | _(required)_ |
-| `DOTNET_VERSION` | Version of .NET SDK to use | `8.0` |
-
----
-
-## Notes
-
-### Boolean Values
-Boolean environment variables accept the following values (case-insensitive):
-- **True**: `true`, `1`, `yes`, `on`
-- **False**: `false`, `0`, `no`, `off`
-
-### Security Best Practices
-- **Always change default passwords** in production environments
-- Change `VS_RCON_SERVER_CFG_PASSWORD`
-- Change `VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY`
-- Change `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_PASSWORD`
-- Use strong, unique passwords for each setting
-
-### Data Persistence
-Always mount the `/vintagestory/data` volume to a persistent location on your host. This ensures:
-- World data is preserved across container updates
-- Server configurations persist
-- Mods are retained
-- Player data is not lost
-
-### Upgrading
-When using `ghcr.io/darkmatterproductions/vintagestory:latest` or `ralnoc/vintagestory:latest`, the image always installs the latest version of Vintage Story. To upgrade:
-
-```bash
-# Stop and remove old container
-docker stop vintagestory-server
-docker rm vintagestory-server # Ensure you have your data backed up or mounted to a volume before removing the container
-
-# Pull latest image
-docker pull ghcr.io/darkmatterproductions/vintagestory:latest
-
-# Start new container with same volumes
-docker run -d \
-  --name vintagestory-server \
-  -p 42420:42420/tcp \
-  -p 42420:42420/udp \
-  -v /path/to/your/vs/data:/vintagestory/data \
-  --restart unless-stopped \
-  ghcr.io/darkmatterproductions/vintagestory:latest
-```
-
-Or with Docker Compose:
-```bash
-docker-compose pull
-docker-compose up -d
-```
+| Argument         | Description                         | Default      |
+|------------------|-------------------------------------|--------------|
+| `VS_VERSION`     | Version of Vintage Story to install | _(required)_ |
+| `DOTNET_VERSION` | Version of .NET SDK to use          | `8.0`        |
