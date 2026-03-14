@@ -2492,6 +2492,10 @@ object RunTestsAndLinting : BuildType({
     maxRunningBuildsPerBranch = "*:1"
     publishArtifacts = PublishMode.SUCCESSFUL
 
+    params {
+        param("env.GIT_DISCOVERY_ACROSS_FILESYSTEM", "1")
+    }
+
     outputParams {
         exposeAllParameters = false
     }
