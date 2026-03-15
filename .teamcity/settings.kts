@@ -2534,12 +2534,12 @@ object RunTestsAndLinting : BuildType({
         qodana {
             name = "Qodana"
             id = "Qodana_1"
-            workingDir = "%env.HOME%/%teamcity.project.id%-VSRconWebClient-%env.BUILD_NUMBER%"
             reportAsTests = true
             linter = python {
                 version = Qodana.PythonVersion.LATEST
             }
             inspectionProfile = default()
+            additionalDockerArguments = "-e PYTHONPATH=%env.HOME%/%teamcity.project.id%-VSRconWebClient-%env.BUILD_NUMBER%"
             cloudToken = "credentialsJSON:fb6a7bc5-2413-47c0-a09f-087510eac952"
         }
         script {
