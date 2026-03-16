@@ -333,6 +333,13 @@ def main():
                         help='Use Vintage Story version from the latest stable API release')
     vs_version_group.add_argument('--api-unstable-vs-version', action='store_true',
                         help='Use Vintage Story version from the latest unstable API release')
+    exclusive_output_group = parser.add_mutually_exclusive_group(required=False)
+    exclusive_output_group.add_argument('--teamcity', action='store_true',
+                                 help='Output metadata to be consumed by TeamCity')
+    exclusive_output_group.add_argument('--github', action='store_true',
+                                 help='Output metadata to be consumed by GitHub Actions')
+    exclusive_output_group.add_argument('--env-file', action='store_true',
+                                        help='Output metadata to environment variable file')
     exclusive_group = parser.add_mutually_exclusive_group(required=False)
     exclusive_group.add_argument('--dev', action='store_true',
                        help='Create a development version (X.Y.Z.devN+hash)')
@@ -368,22 +375,22 @@ def main():
         vs_version = args.vs_version
     print(f"Vintage Story version: {vs_version}\n")
 
-    # Step 1: Get current version
+    # Step 1: Get the current version
     current_version = get_last_version()
     print(f"Current version: {current_version}")
 
-    # Step 2: Get commits since last version
+    # Step 2: Get commits since the last version
     commits = get_commits_since_tag(current_version)
     print(f"Found {len(commits)} new commits\n")
 
-    # Step 3: Determine new version
+    # Step 3: Determine the new version
     base_version = determine_new_version(current_version, commits)
     if base_version is None:
         print("Cannot determine new version")
         sys.exit(1)
 
     # Step 4: Format version based on argument
-    new_version = base_version  # Initialize with base version
+    new_version = base_version  # Initialize with a base version
     if args.dev:
         # Dev version: {new_version}.dev{distance_from_main_HEAD}+{GIT_HASH}
         distance = get_distance_from_main()
@@ -409,42 +416,31 @@ def main():
         new_version = base_version
         print(f"Standard version: {new_version}")
 
-    # Step 5: Output version for TeamCity and GitHub Actions
-    # Output version for TeamCity
-    print(f"##teamcity[setParameter name='build.docker.version.new' value='{new_version.replace('+', '-')}']")
-    print(f"##teamcity[setParameter name='build.docker.tag' value='{vs_version}-{new_version.replace('+', '-')}']")
-    print(f"##teamcity[setParameter name='build.version.new' value='{new_version}']")
-    print(f"##teamcity[setParameter name='build.version.old' value='{current_version}']")
-    print(f"##teamcity[setParameter name='build.gameversion' value='{vs_version}']")
-
-    if args.build:
-        # Step 6: Create git tag (only for non-dev versions)
-        if args.create_git_tag:
-            if args.dry_run:
-                print("[DRY-RUN] Would create git tag:", new_version)
-            else:
-                print("Creating git tag...")
-                create_git_tag(new_version)
-
-        # Output version for GitHub Actions
-        github_output = os.environ.get('GITHUB_OUTPUT', None)
-        if github_output:
-            with open(os.environ.get('GITHUB_OUTPUT', ''), 'a') as f:
-                f.write(f'version={new_version}\n')
-
-            # Step 7: Create zip file (only for non-dev versions)
-            if not args.dev:
-                if args.dry_run:
-                    print("\n[DRY-RUN] Would create release artifact:", f'{repo_name}-{vs_version}-{new_version}.zip')
-                    print("[DRY-RUN] Would create GitHub release for version:", new_version)
-                else:
-                    print("\nCreating release artifact...")
-                    zip_filename = create_zip(repo_name, vs_version, new_version)
-
-                    # Step 8: Create GitHub release
-                    print("\nCreating GitHub release...")
-                    create_github_release(new_version, vs_version, zip_filename)
-
+    # Step 5: Output version for Consumption
+    if args.teamcity:
+        # Output version `for TeamCity
+        print(f"##teamcity[setParameter name='build.docker.version.new' value='{new_version.replace('+', '-')}']")
+        print(f"##teamcity[setParameter name='build.docker.tag' value='{vs_version}-{new_version.replace('+', '-')}']")
+        print(f"##teamcity[setParameter name='build.version.new' value='{new_version}']")
+        print(f"##teamcity[setParameter name='build.version.old' value='{current_version}']")
+        print(f"##teamcit`y[setParameter name='build.gameversion' value='{vs_version}']")
+    elif args.github:
+        with open("github-output.properties", "w") as f:
+            f.write(f"""version={new_version}
+docker_version_new={new_version.replace('+', '-')}
+docker_tag={vs_version}-{new_version.replace('+', '-')}
+gameversion={vs_version}
+version_old={current_version}
+""")
+    elif args.env_file:
+        with open("build.env", "w") as f:
+            f.write(f"VERSION={new_version}\n")
+            f.write(f"DOCKER_VERSION_NEW={new_version.replace('+', '-')}\n")
+            f.write(f"DOCKER_TAG={vs_version}-{new_version.replace('+', '-')}\n")
+            f.write(f"GAMEVERSION={vs_version}\n")
+            f.write(f"VERSION_OLD={current_version}\n")
+    else:
+        raise ValueError("No output format specified, you must select one of --teamcity, --github, or --env")
     print("\n=== Versioning Complete ===")
 
 
