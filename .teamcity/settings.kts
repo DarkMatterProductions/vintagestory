@@ -211,8 +211,12 @@ object BuildVsVersion : BuildType({
         }
         python {
             id = "python_runner"
+            environment = pipenv {
+                arguments = "--python 3.11 pyyaml PyJWT"
+            }
             command = file {
                 filename = "semver.py"
+                scriptArguments = "--name vsvanillaplus --vs-version %build.vsversion% --no-build"
             }
         }
         dockerCommand {
