@@ -209,6 +209,23 @@ object BuildVsVersion : BuildType({
                 python3 -m pip install -y pipenv
             """.trimIndent()
         }
+        script {
+            name = "Get Current Image Version"
+            id = "Get_Current_Image_Version"
+            scriptContent = """
+                #!/usr/bin/env bash
+                
+                IMAGE_VERSION=${'$'}(git describe --tags --abbrev=0)
+                GAME_VERSION="%build.gameversion%"
+                
+                if [ -z "${'$'}{GAME_VERSION}" ]; then
+                    GAME_VERSION=${'$'}(curl -s https://api.vintagestory.at/lateststable.txt)
+                fi
+                
+                echo "##teamcity[setParameter name='build.version.current' value='${'$'}{IMAGE_VERSION}']"
+                echo "##teamcity[setParameter name='build.gameversion' value='${'$'}{GAME_VERSION}']"
+            """.trimIndent()
+        }
         dockerCommand {
             id = "DockerCommand"
             commandType = build {
@@ -246,23 +263,6 @@ object BuildVsVersion : BuildType({
                 subCommand = "system"
                 commandArgs = "prune"
             }
-        }
-        script {
-            name = "Get Current Image Version"
-            id = "Get_Current_Image_Version"
-            scriptContent = """
-                #!/usr/bin/env bash
-                
-                IMAGE_VERSION=${'$'}(git describe --tags --abbrev=0)
-                GAME_VERSION="%build.gameversion%"
-                
-                if [ -z "${'$'}{GAME_VERSION}" ]; then
-                    GAME_VERSION=${'$'}(curl -s https://api.vintagestory.at/lateststable.txt)
-                fi
-                
-                echo "##teamcity[setParameter name='build.version.current' value='${'$'}{IMAGE_VERSION}']"
-                echo "##teamcity[setParameter name='build.gameversion' value='${'$'}{GAME_VERSION}']"
-            """.trimIndent()
         }
     }
 
