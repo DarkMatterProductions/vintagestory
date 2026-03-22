@@ -200,6 +200,15 @@ object BuildVsVersion : BuildType({
     }
 
     steps {
+        script {
+            name = "Setup Python"
+            id = "Setup_Python"
+            scriptContent = """
+                #!/usr/bin/env bash
+                
+                python3 -m pip install -y pipenv
+            """.trimIndent()
+        }
         python {
             id = "python_runner"
             command = file {
@@ -213,15 +222,6 @@ object BuildVsVersion : BuildType({
                     path = "Dockerfile"
                 }
             }
-        }
-        script {
-            name = "Setup Python"
-            id = "Setup_Python"
-            scriptContent = """
-                #!/usr/bin/env bash
-                
-                python3 -m pip install -y pipenv
-            """.trimIndent()
         }
     }
 
