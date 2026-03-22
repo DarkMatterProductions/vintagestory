@@ -227,11 +227,26 @@ object BuildVsVersion : BuildType({
             """.trimIndent()
         }
         dockerCommand {
+            name = "Build Docker Image"
             id = "DockerCommand"
             commandType = build {
                 source = file {
                     path = "Dockerfile"
                 }
+                namesAndTags = """
+                    ralnoc/vintagestory:%build.gameversion%-%build.version.current%-python3-trixie-slim
+                    ralnoc/vintagestory:%build.gameversion%-%build.version.current%
+                    ralnoc/vintagestory:%build.version.current%-python3-trixie-slim
+                    ralnoc/vintagestory:%build.version.current%
+                    ralnoc/vintagestory:%build.gameversion%
+                    ralnoc/vintagestory:latest
+                    ghcr.io/darkmatterproductions/vintagestory:%build.gameversion%-%build.version.current%-python3-trixie-slim
+                    ghcr.io/darkmatterproductions/vintagestory:%build.gameversion%-%build.version.current%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.current%-python3-trixie-slim
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.current%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.gameversion%
+                    ghcr.io/darkmatterproductions/vintagestory:latest
+                """.trimIndent()
                 commandArgs = "-e VS_VERSION=%build.gameversion%"
             }
         }
