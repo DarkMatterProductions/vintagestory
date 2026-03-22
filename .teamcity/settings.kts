@@ -245,6 +245,7 @@ object BuildVsVersion : BuildType({
         dockerCommand {
             name = "Push Docker Images"
             id = "Push_Docker_Images"
+            enabled = false
             commandType = push {
                 namesAndTags = """
                     ralnoc/vintagestory:%build.version.dockertag%-python3-trixie-slim
