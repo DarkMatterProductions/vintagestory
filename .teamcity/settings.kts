@@ -263,6 +263,14 @@ object BuildVsVersion : BuildType({
                 """.trimIndent()
             }
         }
+        dockerCommand {
+            name = "Cleanup Local Images"
+            id = "Cleanup_Local_Images"
+            commandType = other {
+                subCommand = "system"
+                commandArgs = "prune"
+            }
+        }
     }
 
     features {
