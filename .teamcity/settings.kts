@@ -195,6 +195,10 @@ object BuildFeature_1 : BuildType({
 object BuildVsVersion : BuildType({
     name = "Build VS Version"
 
+    params {
+        param("build.gameversion", "")
+    }
+
     vcs {
         root(DslContext.settingsRoot)
     }
