@@ -242,6 +242,26 @@ object BuildVsVersion : BuildType({
                 commandArgs = "-e VS_VERSION=%build.vsversion%"
             }
         }
+        dockerCommand {
+            name = "Push Docker Images"
+            id = "Push_Docker_Images"
+            commandType = push {
+                namesAndTags = """
+                    ralnoc/vintagestory:%build.version.dockertag%-python3-trixie-slim
+                    ralnoc/vintagestory:%build.version.dockertag%
+                    ralnoc/vintagestory:%build.version.container%-python3-trixie-slim
+                    ralnoc/vintagestory:%build.version.container%
+                    ralnoc/vintagestory:%build.version.game%
+                    ralnoc/vintagestory:latest
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.dockertag%-python3-trixie-slim
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.dockertag%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.container%-python3-trixie-slim
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.container%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.game%
+                    ghcr.io/darkmatterproductions/vintagestory:latest
+                """.trimIndent()
+            }
+        }
     }
 
     features {
