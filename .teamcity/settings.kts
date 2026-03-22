@@ -197,6 +197,7 @@ object BuildVsVersion : BuildType({
 
     params {
         param("build.gameversion", "")
+        param("build.version.current", "")
     }
 
     vcs {
