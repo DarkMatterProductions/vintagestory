@@ -196,12 +196,14 @@ object BuildVsVersion : BuildType({
     name = "Build VS Version"
 
     params {
-        param("build.version.current", "")
         text("build.gameversion", "", label = "Vintage Story Version", description = "The version of Vintage Story to build against", display = ParameterDisplay.PROMPT, allowEmpty = true)
+        param("build.version.current", "")
     }
 
     vcs {
         root(DslContext.settingsRoot)
+
+        branchFilter = "+:refs/heads/main"
     }
 
     steps {
