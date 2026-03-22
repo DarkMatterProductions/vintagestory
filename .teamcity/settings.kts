@@ -256,17 +256,17 @@ object BuildVsVersion : BuildType({
             enabled = false
             commandType = push {
                 namesAndTags = """
-                    ralnoc/vintagestory:%build.version.dockertag%-python3-trixie-slim
-                    ralnoc/vintagestory:%build.version.dockertag%
-                    ralnoc/vintagestory:%build.version.container%-python3-trixie-slim
-                    ralnoc/vintagestory:%build.version.container%
-                    ralnoc/vintagestory:%build.version.game%
+                    ralnoc/vintagestory:%build.gameversion%-%build.version.current%-python3-trixie-slim
+                    ralnoc/vintagestory:%build.gameversion%-%build.version.current%
+                    ralnoc/vintagestory:%build.version.current%-python3-trixie-slim
+                    ralnoc/vintagestory:%build.version.current%
+                    ralnoc/vintagestory:%build.gameversion%
                     ralnoc/vintagestory:latest
-                    ghcr.io/darkmatterproductions/vintagestory:%build.version.dockertag%-python3-trixie-slim
-                    ghcr.io/darkmatterproductions/vintagestory:%build.version.dockertag%
-                    ghcr.io/darkmatterproductions/vintagestory:%build.version.container%-python3-trixie-slim
-                    ghcr.io/darkmatterproductions/vintagestory:%build.version.container%
-                    ghcr.io/darkmatterproductions/vintagestory:%build.version.game%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.gameversion%-%build.version.current%-python3-trixie-slim
+                    ghcr.io/darkmatterproductions/vintagestory:%build.gameversion%-%build.version.current%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.current%-python3-trixie-slim
+                    ghcr.io/darkmatterproductions/vintagestory:%build.version.current%
+                    ghcr.io/darkmatterproductions/vintagestory:%build.gameversion%
                     ghcr.io/darkmatterproductions/vintagestory:latest
                 """.trimIndent()
             }
