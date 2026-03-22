@@ -267,6 +267,11 @@ object BuildVsVersion : BuildType({
     features {
         perfmon {
         }
+        dockerRegistryConnections {
+            loginToRegistry = on {
+                dockerRegistryId = "PROJECT_EXT_3,PROJECT_EXT_11"
+            }
+        }
     }
 })
 
