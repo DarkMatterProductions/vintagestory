@@ -214,6 +214,15 @@ object BuildVsVersion : BuildType({
                 }
             }
         }
+        script {
+            name = "Setup Python"
+            id = "Setup_Python"
+            scriptContent = """
+                #!/usr/bin/env bash
+                
+                python3 -m pip install -y pipenv
+            """.trimIndent()
+        }
     }
 
     features {
