@@ -199,6 +199,23 @@ object BuildVsVersion : BuildType({
         root(DslContext.settingsRoot)
     }
 
+    steps {
+        dockerCommand {
+            id = "DockerCommand"
+            commandType = build {
+                source = file {
+                    path = "Dockerfile"
+                }
+            }
+        }
+        python {
+            id = "python_runner"
+            command = file {
+                filename = "semver.py"
+            }
+        }
+    }
+
     features {
         perfmon {
         }
