@@ -203,6 +203,7 @@ object BuildVsVersion : BuildType({
         script {
             name = "Setup Python"
             id = "Setup_Python"
+            enabled = false
             scriptContent = """
                 #!/usr/bin/env bash
                 
