@@ -200,18 +200,18 @@ object BuildVsVersion : BuildType({
     }
 
     steps {
+        python {
+            id = "python_runner"
+            command = file {
+                filename = "semver.py"
+            }
+        }
         dockerCommand {
             id = "DockerCommand"
             commandType = build {
                 source = file {
                     path = "Dockerfile"
                 }
-            }
-        }
-        python {
-            id = "python_runner"
-            command = file {
-                filename = "semver.py"
             }
         }
     }
