@@ -48,6 +48,7 @@ project {
 
     buildType(IntegrateAndPublish)
     buildType(BuildFeature_1)
+    buildType(BuildVsVersion)
     buildType(IntegrateRelease)
     buildType(RunTestsAndLinting)
 
@@ -187,6 +188,19 @@ object BuildFeature_1 : BuildType({
             labelingPattern = "feature-%system.build.number%"
             successfulOnly = true
             branchFilter = "+:feature/*"
+        }
+    }
+})
+
+object BuildVsVersion : BuildType({
+    name = "Build VS Version"
+
+    vcs {
+        root(DslContext.settingsRoot)
+    }
+
+    features {
+        perfmon {
         }
     }
 })
