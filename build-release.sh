@@ -249,8 +249,8 @@ source build.env
 step_header_string "Vintage Story Docker Image Build"
 action_string "Image Version: ${LAVENDER}${VERSION}${NC} State: ${LAVENDER}${VS_VERSION_STATE}${NC} Version: ${LAVENDER}${VS_VERSION}${NC}"
 action_string ".Net Version: ${LAVENDER}${DOTNET_VERSION}${NC} Dev Image Tag: ${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}"
-echo execute "Building Docker image" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-echo execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}${NC}) to Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+execute "Building Docker image" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}${NC}) to Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
 step_header_string "Publishing Images"
 action_string "Publishing Tag Matrix"
 declare REPOSITORIES=(
@@ -272,8 +272,9 @@ execute "Logging into Docker Hub" "echo ${DOCKERHUB_TOKEN} | docker login -u ${D
 for tag in "${TAG_MATRIX[@]}";do
   action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
   for repo in "${REPOSITORIES[@]}"; do
-    execute "Tagging Image" docker tag registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" "${repo}:${tag}"
-    execute "Pushing Image" docker push "${repo}:${tag}"
+    action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" docker tag registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" "${repo}:${tag}"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" docker push "${repo}:${tag}"
   done
 done
 
