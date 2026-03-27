@@ -263,6 +263,7 @@ declare TAG_MATRIX=(
   ${DOCKER_VERSION_NEW}-python3-trixie-slim
   ${DOCKER_VERSION_NEW}
   ${VS_VERSION}
+  ${VS_VERSION_STATE}
   latest
 )
 execute "Logging into GHCR" "echo ${GHCR_TOKEN} | docker login ghcr.io -u ghcr_user --password-stdin"
