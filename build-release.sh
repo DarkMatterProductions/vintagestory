@@ -240,7 +240,7 @@ execute "Purging Local Git Tags." "git tag -d $(git tag -l)"
 execute "Pulling Git Tags." "git fetch origin --tags"
 action_string "Pulled (${LAVENDER}$(git --no-pager tag | wc -l)${NC}) tags from Repository."
 action_string "Generating Semver Arguments."
-SEMVER_ARGS="--name vintagestory --dev --env-file --vs-version ${VS_VERSION}"
+SEMVER_ARGS="--name vintagestory --env-file --vs-version ${VS_VERSION}"
 
 execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS}${NC}" python ./semver.py "${SEMVER_ARGS}"
 action_string "Loading Build Environment Variables"
@@ -249,8 +249,33 @@ source build.env
 step_header_string "Vintage Story Docker Image Build"
 action_string "Image Version: ${LAVENDER}${VERSION}${NC} State: ${LAVENDER}${VS_VERSION_STATE}${NC} Version: ${LAVENDER}${VS_VERSION}${NC}"
 action_string ".Net Version: ${LAVENDER}${DOTNET_VERSION}${NC} Dev Image Tag: ${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}"
-execute "Building Docker image" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}${NC}) to Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+echo execute "Building Docker image" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+echo execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}${NC}) to Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+step_header_string "Publishing Images"
+action_string "Publishing Tag Matrix"
+declare REPOSITORIES=(
+  ralnoc/vintagestory
+  ghcr.io/darkmatterproductions/vintagestory
+)
+declare TAG_MATRIX=(
+  ${VS_VERSION}-${DOCKER_VERSION_NEW}-python3-trixie-slim
+  ${VS_VERSION}-${DOCKER_VERSION_NEW}
+  ${DOCKER_VERSION_NEW}-python3-trixie-slim
+  ${DOCKER_VERSION_NEW}
+  ${VS_VERSION}
+  latest
+)
+execute "Logging into GHCR" "echo ${GHCR_TOKEN} | docker login ghcr.io -u ghcr_user --password-stdin"
+execute "Logging into Docker Hub" "echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin"
+
+for tag in "${TAG_MATRIX[@]}";do
+  action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
+  for repo in "${REPOSITORIES[@]}"; do
+    execute "Tagging Image" docker tag registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" "${repo}:${tag}"
+    execute "Pushing Image" docker push "${repo}:${tag}"
+  done
+done
+
 step_header_string "Build Cleanup"
 execute "Pruning unused images" docker image prune -f
 execute "Removing ${LAVENDER}build.env${NC} File" rm build.env
