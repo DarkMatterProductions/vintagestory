@@ -192,6 +192,12 @@ check_vars() {
 VS_VERSION_ARG=$1
 ARG_2=$2
 
+if [[ -z "${VS_VERSION_ARG}" ]]; then
+  INDENT=$(printf -- ' %.0s' {1..27})
+  error_string "${RED}Argument required. Syntax: $(basename $0) [stable|unstable]\n${INDENT}$(basename $0) <VS-version> <state-metadata[stable|unstable]>${NC}"
+  exit 1
+fi
+
 if [[ "${VS_VERSION_ARG}" == "stable" ]]; then
   IDENTIFIED_VS_VERSION=$(curl -s https://api.vintagestory.at/lateststable.txt)
   VS_VERSION_STATE="stable"
