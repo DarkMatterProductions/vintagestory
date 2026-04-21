@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+## Header and Rxecution Management Functions and Variables
+
 # Color Code information from: https://misc.flogisoft.com/bash/tip_colors_and_formatting
 RED='\e[38;5;124m'
 LIGHTRED='\e[38;5;1m'
@@ -185,15 +187,16 @@ check_vars() {
   return 0
 }
 
-ARG_1=$1
-ARG_2=$2
-RAW_VS_VERSION=$ARG_1
+## Script Code Starts Here
 
-if [[ "${ARG_1}" == "stable" ]]; then
-  RAW_VS_VERSION=$(curl -s https://api.vintagestory.at/lateststable.txt)
+VS_VERSION_ARG=$1
+ARG_2=$2
+
+if [[ "${VS_VERSION_ARG}" == "stable" ]]; then
+  IDENTIFIED_VS_VERSION=$(curl -s https://api.vintagestory.at/lateststable.txt)
   VS_VERSION_STATE="stable"
-elif [[ "${ARG_1}" == "unstable" ]]; then
-  RAW_VS_VERSION=$(curl -s https://api.vintagestory.at/latestunstable.txt)
+elif [[ "${VS_VERSION_ARG}" == "unstable" ]]; then
+  IDENTIFIED_VS_VERSION=$(curl -s https://api.vintagestory.at/latestunstable.txt)
   VS_VERSION_STATE="unstable"
 fi
 
@@ -203,7 +206,7 @@ elif [[ "${ARG_2}" == "unstable" ]]; then
   VS_VERSION_STATE="unstable"
 fi
 
-if [ ! -z "${RAW_VS_VERSION+x}" ] && [[ $RAW_VS_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
+if [ ! -z "${IDENTIFIED_VS_VERSION+x}" ] && [[ $IDENTIFIED_VS_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
   declare -A VS_VERSION_ARRAY=(
     [MAJOR]=${BASH_REMATCH[1]}
     [MINOR]=${BASH_REMATCH[2]}
@@ -254,8 +257,8 @@ execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOC
 step_header_string "Publishing Images"
 action_string "Publishing Tag Matrix"
 declare REPOSITORIES=(
-  ralnoc/vintagestory
   ghcr.io/darkmatterproductions/vintagestory
+  ralnoc/vintagestory
 )
 declare TAG_MATRIX=(
   ${VS_VERSION}-${DOCKER_VERSION_NEW}-python3-trixie-slim
@@ -264,18 +267,21 @@ declare TAG_MATRIX=(
   ${DOCKER_VERSION_NEW}
   ${VS_VERSION}
   ${VS_VERSION_STATE}
-  latest
 )
-execute "Logging into GHCR" "echo ${GHCR_TOKEN} | docker login ghcr.io -u ghcr_user --password-stdin"
-execute "Logging into Docker Hub" "echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin"
-
-for tag in "${TAG_MATRIX[@]}";do
-  action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
-  for repo in "${REPOSITORIES[@]}"; do
-    action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" docker tag registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" "${repo}:${tag}"
-    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" docker push "${repo}:${tag}"
+execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
+execute "Logging into Docker Hub as ${DOCKERHUB_USERNAME}" bash -c "echo ${DOCKERHUB_TOKEN} | docker --context remote-engine login -u ${DOCKERHUB_USERNAME} --password-stdin"
+for repo in "${REPOSITORIES[@]}"; do
+  action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
+  for tag in "${TAG_MATRIX[@]}";do
+    action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
   done
+  if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
+    action_string "Processing (${LAVENDER}${VS_VERSION_STATE}${NC}) Image Tag: ${LAVENDER}latest${NC}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:latest"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
+  fi
 done
 
 step_header_string "Build Cleanup"
