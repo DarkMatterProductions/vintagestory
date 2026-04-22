@@ -192,6 +192,12 @@ check_vars() {
 VS_VERSION_ARG=$1
 ARG_2=$2
 
+if [[ -z "${VS_VERSION_ARG}" ]]; then
+  INDENT=$(printf -- ' %.0s' {1..27})
+  error_string "${RED}Argument required. Syntax: $(basename $0) [stable|unstable]\n${INDENT}$(basename $0) <VS-version> <state-metadata[stable|unstable]>${NC}"
+  exit 1
+fi
+
 if [[ "${VS_VERSION_ARG}" == "stable" ]]; then
   IDENTIFIED_VS_VERSION=$(curl -s https://api.vintagestory.at/lateststable.txt)
   VS_VERSION_STATE="stable"
@@ -284,6 +290,28 @@ for repo in "${REPOSITORIES[@]}"; do
   fi
 done
 
+step_header_string "Creating GitHub Release"
+action_string "Creating GitHub Release for tag: ${LAVENDER}${DOCKER_VERSION_NEW}${NC}"
+RELEASE_NOTES="## Vintage Story Docker Image Release
+
+**Vintage Story Version:** \`${VS_VERSION}\`
+**Docker Image Version:** \`${DOCKER_VERSION_NEW}\`
+**Release State:** \`${VS_VERSION_STATE}\`
+
+### Docker Image Tags
+$(for tag in "${TAG_MATRIX[@]}"; do echo "- \`${tag}\`"; done)
+$(if [[ "${VS_VERSION_STATE}" == "stable" ]]; then echo "- \`latest\`"; fi)
+
+### Available Repositories
+$(for repo in "${REPOSITORIES[@]}"; do echo "- \`${repo}\`"; done)"
+
+GH_TOKEN="${GHCR_TOKEN}" execute "Creating GitHub Release: ${LAVENDER}${DOCKER_VERSION_NEW}${NC}" \
+  gh release create "${DOCKER_VERSION_NEW}" \
+    --title "Vintage Story ${VS_VERSION} (Docker ${DOCKER_VERSION_NEW})" \
+    --notes "${RELEASE_NOTES}" \
+    $(if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then echo "--prerelease"; fi)
+
+step_footer_string
 step_header_string "Build Cleanup"
 execute "Pruning unused images" docker image prune -f
 execute "Removing ${LAVENDER}build.env${NC} File" rm build.env

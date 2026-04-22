@@ -185,15 +185,22 @@ check_vars() {
   return 0
 }
 
-ARG_1=$1
-ARG_2=$2
-RAW_VS_VERSION=$ARG_1
+## Script Code Starts Here
 
-if [[ "${ARG_1}" == "stable" ]]; then
-  RAW_VS_VERSION=$(curl -s https://api.vintagestory.at/lateststable.txt)
+VS_VERSION_ARG=$1
+ARG_2=$2
+
+if [[ -z "${VS_VERSION_ARG}" ]]; then
+  INDENT=$(printf -- ' %.0s' {1..27})
+  error_string "${RED}Argument required. Syntax: $(basename $0) [stable|unstable]\n${INDENT}$(basename $0) <VS-version> <state-metadata[stable|unstable]>${NC}"
+  exit 1
+fi
+
+if [[ "${VS_VERSION_ARG}" == "stable" ]]; then
+  IDENTIFIED_VS_VERSION=$(curl -s https://api.vintagestory.at/lateststable.txt)
   VS_VERSION_STATE="stable"
-elif [[ "${ARG_1}" == "unstable" ]]; then
-  RAW_VS_VERSION=$(curl -s https://api.vintagestory.at/latestunstable.txt)
+elif [[ "${VS_VERSION_ARG}" == "unstable" ]]; then
+  IDENTIFIED_VS_VERSION=$(curl -s https://api.vintagestory.at/latestunstable.txt)
   VS_VERSION_STATE="unstable"
 fi
 
@@ -203,7 +210,7 @@ elif [[ "${ARG_2}" == "unstable" ]]; then
   VS_VERSION_STATE="unstable"
 fi
 
-if [ ! -z "${RAW_VS_VERSION+x}" ] && [[ $RAW_VS_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
+if [ ! -z "${IDENTIFIED_VS_VERSION+x}" ] && [[ $IDENTIFIED_VS_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
   declare -A VS_VERSION_ARRAY=(
     [MAJOR]=${BASH_REMATCH[1]}
     [MINOR]=${BASH_REMATCH[2]}
