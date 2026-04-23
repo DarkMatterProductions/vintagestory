@@ -349,8 +349,9 @@ def main():
                        help='Create a beta prerelease version (X.Y.Z-beta.N)')
     exclusive_group.add_argument('--rc', action='store_true',
                        help='Create a release candidate version (X.Y.Z-rc.N)')
-    exclusive_group.add_argument('--create-git-tag', action='store_true',
-                       help='Create and push a git tag for the new version')
+    exclusive_group.add_argument('--no-create-git-tag',
+                                 action='store_false', dest="create_git_tag",
+                                 help='Disable create and push for git tags of the new version')
 
     args = parser.parse_args()
 
@@ -415,6 +416,10 @@ def main():
         # No argument: use standard version format {new_version}
         new_version = base_version
         print(f"Standard version: {new_version}")
+
+    # Step 5: Tag Version to Repository
+    if args.create_git_tag is True:
+        create_git_tag(new_version)
 
     # Step 5: Output version for Consumption
     if args.teamcity:
