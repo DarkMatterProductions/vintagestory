@@ -119,7 +119,7 @@ def load_config():
                     "max_login_attempts": env_override("security_max_login_attempts", 5),
                     "lockout_duration": env_override("security_lockout_duration", 300),
                     "oauth": {
-                        "enabled": env_override("security_oauth_enabled", True),
+                        "enabled": env_override("security_oauth_enabled", False),
                         "authorized_emails": env_override("security_oauth_authorized_emails", [
                             "admin@example.com",
                             "user@example.com"
@@ -197,10 +197,10 @@ def load_config():
 
 def initialize_oauth_providers():
     """Initialize OAuth providers based on configuration"""
-    oauth_config = config.get('security', {}).get('oauth', {})
+    oauth_config = config.get('security', {}).get('oauth', {'enabled': False})
 
     # Google OAuth
-    if oauth_config.get('google', {}).get('enabled', False):
+    if oauth_config['enabled'] is True and oauth_config.get('google', {}).get('enabled', False):
         google_config = oauth_config['google']
         oauth.register(
             name='google',
@@ -214,7 +214,7 @@ def initialize_oauth_providers():
         logger.info("Google OAuth provider registered")
 
     # Facebook OAuth
-    if oauth_config.get('facebook', {}).get('enabled', False):
+    if oauth_config['enabled'] is True and oauth_config.get('facebook', {}).get('enabled', False):
         facebook_config = oauth_config['facebook']
         oauth.register(
             name='facebook',
@@ -230,7 +230,7 @@ def initialize_oauth_providers():
         logger.info("Facebook OAuth provider registered")
 
     # GitHub OAuth
-    if oauth_config.get('github', {}).get('enabled', False):
+    if oauth_config['enabled'] is True and oauth_config.get('github', {}).get('enabled', False):
         github_config = oauth_config['github']
         oauth.register(
             name='github',
@@ -246,7 +246,7 @@ def initialize_oauth_providers():
         logger.info("GitHub OAuth provider registered")
 
     # Apple OAuth
-    if oauth_config.get('apple', {}).get('enabled', False):
+    if oauth_config['enabled'] is True and oauth_config.get('apple', {}).get('enabled', False):
         apple_config = oauth_config['apple']
         oauth.register(
             name='apple',
