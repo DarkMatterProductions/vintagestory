@@ -3,6 +3,8 @@ Vintage Story RCon Web Client
 Async Application with FastAPI and python-socketio
 JWT-based authentication for unified session management
 """
+import sys
+
 import yaml
 import logging
 from datetime import datetime, timedelta
@@ -72,127 +74,47 @@ def load_config():
     """Load configuration from config.yaml"""
     global config, JWT_SECRET_KEY, _middleware_added
 
-    config_path = Path(__file__).parent / 'config.yaml'
+    config_path = Path(__file__).parent / 'client-config.yaml'
 
-    if not config_path.exists():
-        logger.warning(f"{config_path} not found, using default configuration")
-        with open(config_path, 'w') as f:
-            # Default configuration with environment variable overrides
-            # Each config item can be overridden with VS_RCON_CLIENT_CFG_* environment variables
-            # Example: VS_RCON_CLIENT_CFG_SERVER_HOST=0.0.0.0
-            import os
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
 
-            def env_override(key_path, default_value):
-                """Get config value from environment variable or use default"""
-                env_key = f"VS_RCON_CLIENT_CFG_{key_path.upper()}"
-                env_value = os.environ.get(env_key)
-                if env_value is not None:
-                    # Convert string to appropriate type
-                    if isinstance(default_value, bool):
-                        return env_value.lower() in ('true', '1', 'yes', 'on')
-                    elif isinstance(default_value, int):
-                        return int(env_value)
-                    elif isinstance(default_value, list):
-                        return [item.strip() for item in env_value.split(',')]
-                    return env_value
-                return default_value
+            # Setup JWT secret key
+            JWT_SECRET_KEY = config.get('server', {}).get('secret_key', 'change-this-secret-key')
 
-            config = {
-                "server": {
-                    "host": env_override("server_host", "0.0.0.0"),
-                    "port": env_override("server_port", 5000),
-                    "secret_key": env_override("server_secret_key", "vintage-story-rcon-client-secret-key-change-me")
-                },
-                "rcon": {
-                    "default_host": env_override("rcon_default_host", "localhost"),
-                    "default_port": env_override("rcon_default_port", 42425),
-                    "password": env_override("rcon_password", "changeme"),
-                    "locked_address": env_override("rcon_locked_address", False),
-                    "timeout": env_override("rcon_timeout", 10),
-                    "max_message_size": env_override("rcon_max_message_size", 4096)
-                },
-                "security": {
-                    "require_auth": env_override("security_require_auth", True),
-                    "traditional_login_enabled": env_override("security_traditional_login_enabled", True),
-                    "default_username": env_override("security_default_username", "admin"),
-                    "default_password": env_override("security_default_password", "changeme"),
-                    "max_login_attempts": env_override("security_max_login_attempts", 5),
-                    "lockout_duration": env_override("security_lockout_duration", 300),
-                    "oauth": {
-                        "enabled": env_override("security_oauth_enabled", False),
-                        "authorized_emails": env_override("security_oauth_authorized_emails", [
-                            "admin@example.com",
-                            "user@example.com"
-                        ]),
-                        "google": {
-                            "enabled": env_override("security_oauth_google_enabled", True),
-                            "client_id": env_override("security_oauth_google_client_id", "your-google-client-id.apps.googleusercontent.com"),
-                            "client_secret": env_override("security_oauth_google_client_secret", "your-google-client-secret")
-                        },
-                        "facebook": {
-                            "enabled": env_override("security_oauth_facebook_enabled", False),
-                            "client_id": env_override("security_oauth_facebook_client_id", "your-facebook-app-id"),
-                            "client_secret": env_override("security_oauth_facebook_client_secret", "your-facebook-app-secret")
-                        },
-                        "github": {
-                            "enabled": env_override("security_oauth_github_enabled", False),
-                            "client_id": env_override("security_oauth_github_client_id", "your-github-client-id"),
-                            "client_secret": env_override("security_oauth_github_client_secret", "your-github-client-secret")
-                        },
-                        "apple": {
-                            "enabled": env_override("security_oauth_apple_enabled", False),
-                            "client_id": env_override("security_oauth_apple_client_id", "your-apple-service-id"),
-                            "client_secret": env_override("security_oauth_apple_client_secret", "your-apple-client-secret"),
-                            "team_id": env_override("security_oauth_apple_team_id", "your-apple-team-id"),
-                            "key_id": env_override("security_oauth_apple_key_id", "your-apple-key-id")
-                        }
-                    }
-                },
-                "logging": {
-                    "log_commands": env_override("logging_log_commands", True),
-                    "log_file": env_override("logging_log_file", "logs/rcon.log"),
-                    "log_level": env_override("logging_log_level", "INFO")
-                }
-            }
+            # Add SessionMiddleware for OAuth flow (required by authlib)
+            # Note: We use JWT for user authentication, but OAuth needs sessions for the redirect flow
+            # Only add middleware once to avoid RuntimeError when load_config is called multiple times
+            if not _middleware_added:
+                secret_key = config.get('server', {}).get('secret_key', 'change-this-secret-key')
+                app.add_middleware(SessionMiddleware, secret_key=secret_key)
+                _middleware_added = True
 
-            yaml.dump(config, f)
-            logger.info(f"Default configuration created at {config_path}")
+            # Setup logging
+            log_level = config.get('logging', {}).get('log_level', 'INFO')
+            logging.getLogger().setLevel(getattr(logging, log_level))
 
-    try:
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
+            # Create logs directory if needed
+            log_file = config.get('logging', {}).get('log_file')
+            if log_file:
+                log_dir = Path(log_file).parent
+                log_dir.mkdir(parents=True, exist_ok=True)
 
-        # Setup JWT secret key
-        JWT_SECRET_KEY = config.get('server', {}).get('secret_key', 'change-this-secret-key')
-
-        # Add SessionMiddleware for OAuth flow (required by authlib)
-        # Note: We use JWT for user authentication, but OAuth needs sessions for the redirect flow
-        # Only add middleware once to avoid RuntimeError when load_config is called multiple times
-        if not _middleware_added:
-            secret_key = config.get('server', {}).get('secret_key', 'change-this-secret-key')
-            app.add_middleware(SessionMiddleware, secret_key=secret_key)
-            _middleware_added = True
-
-        # Setup logging
-        log_level = config.get('logging', {}).get('log_level', 'INFO')
-        logging.getLogger().setLevel(getattr(logging, log_level))
-
-        # Create logs directory if needed
-        log_file = config.get('logging', {}).get('log_file')
-        if log_file:
-            log_dir = Path(log_file).parent
-            log_dir.mkdir(parents=True, exist_ok=True)
-
-        logger.info("Configuration loaded successfully")
+            logger.info("Configuration loaded successfully")
 
 
-        # Initialize OAuth providers if enabled
-        if config.get('security', {}).get('oauth', {}).get('enabled', False):
-            initialize_oauth_providers()
+            # Initialize OAuth providers if enabled
+            if config.get('security', {}).get('oauth', {}).get('enabled', False):
+                initialize_oauth_providers()
 
-    except Exception as e:
-        logger.error(f"Error loading configuration: {e}")
-        raise
+        except Exception as e:
+            logger.error(f"Error loading configuration: {e}")
+            raise
+    else:
+        print(f"Error loading configuration: {config_path} not found")
+        sys.exit(1)
 
 
 def initialize_oauth_providers():

@@ -18,9 +18,11 @@ ENV VSPATH=${VSPATH}
 ENV DATAPATH=${DATAPATH}
 
 ARG VS_VERSION=1.21.6
+ARG VERSION
 ARG VS_VERSION_STATE=stable
 ARG DOTNET_VERSION=8.0
 ENV VS_VERSION=${VS_VERSION}
+ENV VERSION=${VERSION}
 ENV VS_VERSION_STATE=${VS_VERSION_STATE}
 ENV DOTNET_VERSION=${DOTNET_VERSION}
 
@@ -30,7 +32,8 @@ LABEL org.opencontainers.image.licenses=MIT
 LABEL in.dmpsys.maintainer="DarkMatter Productions"
 LABEL in.dmpsys.project="Vintage Story Dedicated Server"
 LABEL in.dmpsys.website="https://github.com/DarkMatterProductions/vintagestory"
-LABEL in.dmpsys.vsversion="${VS_VERSION}"
+LABEL in.dmpsys.vs.version="${VS_VERSION}"
+LABEL in.dmpsys.image.version="${VERSION}"
 
 
 # Server configuration defaults (can be overridden with -e flags at runtime)

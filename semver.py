@@ -29,16 +29,26 @@ def get_distance_from_main() -> int:
         return 0
 
 
-def get_current_git_hash() -> str:
+def get_current_git_hash(is_dev: bool = False) -> str:
     """Get the shortened git hash of the current HEAD."""
+    if is_dev:
+        get_hash_cmd = ['git', 'write-tree']
+    else:
+        get_hash_cmd = ['git', 'rev-parse', '--short', 'HEAD']
+
     try:
         result = subprocess.run(
-            ['git', 'rev-parse', '--short', 'HEAD'],
+            get_hash_cmd,
             capture_output=True,
             text=True,
             check=True
         )
-        return result.stdout.strip()
+        result_hash = result.stdout.strip()
+        if len(result_hash) > 7:
+            git_hash = result_hash[:7]
+        else:
+            git_hash = result_hash
+        return git_hash
     except Exception as e:
         print(f"Error getting git hash: {e}")
         return 'unknown'
@@ -326,6 +336,9 @@ def main():
                         help='Build artifact and GitHub release')
     parser.add_argument('--dry-run', action='store_true',
                         help='Perform a dry run without creating tags or releases')
+    parser.add_argument('--no-create-git-tag',
+                        action='store_false', dest="create_git_tag",
+                        help='Disable create and push for git tags of the new version')
     vs_version_group = parser.add_mutually_exclusive_group(required=True)
     vs_version_group.add_argument('--vs-version', type=str, default=None,
                         help='Vintage Story version to build for (Default: 1.21.6)')
@@ -349,9 +362,6 @@ def main():
                        help='Create a beta prerelease version (X.Y.Z-beta.N)')
     exclusive_group.add_argument('--rc', action='store_true',
                        help='Create a release candidate version (X.Y.Z-rc.N)')
-    exclusive_group.add_argument('--no-create-git-tag',
-                                 action='store_false', dest="create_git_tag",
-                                 help='Disable create and push for git tags of the new version')
 
     args = parser.parse_args()
 
@@ -395,7 +405,7 @@ def main():
     if args.dev:
         # Dev version: {new_version}.dev{distance_from_main_HEAD}+{GIT_HASH}
         distance = get_distance_from_main()
-        git_hash = get_current_git_hash()
+        git_hash = get_current_git_hash(args.dev)
         new_version = f"{base_version}.dev{distance}+{git_hash}"
         print(f"Dev version format: {new_version}")
         print(f"Distance from main: {distance}")
