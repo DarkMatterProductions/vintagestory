@@ -5,16 +5,19 @@ RED='\e[38;5;124m'
 LIGHTRED='\e[38;5;1m'
 GREEN='\e[38;5;34m'
 LIGHTGREEN='\e[38;5;82m'
+LEAFGREEN='\e[38;5;112m'
 BROWN='\e[38;5;94m'
 LIGHTBROWN='\e[38;5;137m'
 YELLOW='\e[38;5;226m'
 LIGHTYELLOW='\e[38;5;228m'
-BLUE='\e[38;5;20m'
-LIGHTBLUE='\e[38;5;27m'
+DARKBLUE='\e[38;5;20m'
+BLUE='\e[38;5;27m'
+LIGHTBLUE='\e[38;5;33m'
 CYAN='\e[38;5;74m'
 LIGHTCYAN='\e[38;5;87m'
 LAVENDER='\e[38;5;171m'
 PURPLE='\e[38;5;54m'
+BLUEPURPLE='\e[38;5;63m'
 LIGHTPURPLE='\e[38;5;93m'
 DARKGRAY='\e[38;5;238m'
 LIGHTGRAY='\e[38;5;248m'
@@ -137,7 +140,15 @@ step_header_string() {
   OUTPUT_TEXT="$*"
   # Strip ANSI color codes for length calculation
   local TEXT_COUNT=$(echo -e "${OUTPUT_TEXT}" | sed $'s/\e\\[[0-9;]*m//g').
-  COLORIZE_STRING CYAN "$(COLORIZE_PADDING "${PADDING:0:6}" 17 21) ${OUTPUT_TEXT} $(COLORIZE_PADDING "${PADDING:$(( ${#TEXT_COUNT} )):$(( 80 - (${#TEXT_COUNT}) ))}" 21 17)\n"
+  COLORIZE_STRING LIGHTBLUE "$(COLORIZE_PADDING "${PADDING:0:6}" 17 21) ${OUTPUT_TEXT} $(COLORIZE_PADDING "${PADDING:$(( ${#TEXT_COUNT} + 6 )):$(( 80 - (${#TEXT_COUNT}) ))}" 21 17)\n"
+}
+
+sub_step_header_string() {
+  PADDING="================================================================================"
+  OUTPUT_TEXT="$*"
+  # Strip ANSI color codes for length calculation
+  local TEXT_COUNT=$(echo -e "${OUTPUT_TEXT}" | sed $'s/\e\\[[0-9;]*m//g').
+  COLORIZE_STRING BLUEPURPLE "${OUTPUT_TEXT} $(COLORIZE_PADDING "${PADDING:$(( ${#TEXT_COUNT} + 5 )):$(( 80 - (${#TEXT_COUNT}) ))}" 21 17)\n"
 }
 
 step_footer_string() {
@@ -147,7 +158,19 @@ step_footer_string() {
 }
 
 action_string() {
+  COLORIZE_STRING CYAN "$*"
+}
+
+info_string() {
   COLORIZE_STRING LIGHTBLUE "$*"
+}
+
+list_header() {
+  COLORIZE_STRING LIGHTBLUE "$*:\n"
+}
+
+list_item() {
+  COLORIZE_STRING LIGHTBLUE "   -- $*\n"
 }
 
 error_string() {
@@ -232,32 +255,60 @@ VS_VERSION="${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}.${VS_VERSION_A
 DOTNET_VERSION=${VS_STATE_DOTNET_VERSION[${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}.${VS_VERSION_ARRAY[BUILD]}]}
 
 section_header_string "Docker Build"
-step_header_string "Initializing Build Environment"
+step_header_string "Environment Initialization"
 if [ ! "$MSYSTEM" = "MINGW64" ]; then
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - bash)"
-eval "$(pyenv virtualenv-init -)"
+  export PYENV_ROOT="$HOME/.pyenv"
+  [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+  eval "$(pyenv init - bash)"
+  eval "$(pyenv virtualenv-init -)"
 fi
-
+sub_step_header_string "Initializing Python Environment"
 execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv local "${PYTHON_VERSION}"
 execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION} -m pip install pipenv requests"
-execute "Installing Python Dependencies into Virtual Environment." "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
-execute "Purging Local Git Tags." "git tag -d $(git tag -l)"
-execute "Pulling Git Tags." "git fetch origin --tags"
+execute "Installing Python Dependencies into Virtual Environment" "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
+
+sub_step_header_string "Cleaning Git Tags for Semver"
+execute "Purging Local Git Tags" "git tag -d $(git tag -l)"
+execute "Pulling Git Tags" "git fetch origin --tags"
 action_string "Pulled (${LAVENDER}$(git --no-pager tag | wc -l)${NC}) tags from Repository."
-action_string "Generating Semver Arguments."
+
+sub_step_header_string "Generating Semver Arguments"
 SEMVER_ARGS="--name vintagestory --dev --env-file --vs-version ${VS_VERSION} --no-create-git-tag"
 
 execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS}${NC}" python ./semver.py "${SEMVER_ARGS}"
 action_string "Loading Build Environment Variables"
 source build.env
 
+declare TAG_MATRIX=(
+  "${DOCKER_VERSION_NEW}-python3-trixie-slim"
+  "${DOCKER_VERSION_NEW}"
+)
+
+declare REPOSITORIES=(
+)
+
+
 step_header_string "Vintage Story Docker Image Build"
-action_string "Image Version: ${LAVENDER}${VERSION}${NC} State: ${LAVENDER}${VS_VERSION_STATE}${NC} Version: ${LAVENDER}${VS_VERSION}${NC}"
-action_string ".Net Version: ${LAVENDER}${DOTNET_VERSION}${NC} Dev Image Tag: ${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}"
-execute "Building Docker image" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg VERSION=${VERSION} --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}${NC}) to Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
+info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
+list_header "Docker Image Tags"
+for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
+
+list_header "Target Repositories"
+for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
+execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VERSION="${VERSION}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+
+step_header_string "Publishing Images"
+execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
+for repo in "${REPOSITORIES[@]}"; do
+  action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
+  for tag in "${TAG_MATRIX[@]}";do
+    action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
+  done
+done
 step_header_string "Build Cleanup"
 execute "Pruning unused images" docker image prune -f
 execute "Removing ${LAVENDER}build.env${NC} File" rm build.env

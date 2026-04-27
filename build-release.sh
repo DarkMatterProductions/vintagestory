@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 
-## Header and Rxecution Management Functions and Variables
-
 # Color Code information from: https://misc.flogisoft.com/bash/tip_colors_and_formatting
 RED='\e[38;5;124m'
 LIGHTRED='\e[38;5;1m'
 GREEN='\e[38;5;34m'
 LIGHTGREEN='\e[38;5;82m'
+LEAFGREEN='\e[38;5;112m'
 BROWN='\e[38;5;94m'
 LIGHTBROWN='\e[38;5;137m'
 YELLOW='\e[38;5;226m'
 LIGHTYELLOW='\e[38;5;228m'
-BLUE='\e[38;5;20m'
-LIGHTBLUE='\e[38;5;27m'
+DARKBLUE='\e[38;5;20m'
+BLUE='\e[38;5;27m'
+LIGHTBLUE='\e[38;5;33m'
 CYAN='\e[38;5;74m'
 LIGHTCYAN='\e[38;5;87m'
 LAVENDER='\e[38;5;171m'
 PURPLE='\e[38;5;54m'
+BLUEPURPLE='\e[38;5;63m'
 LIGHTPURPLE='\e[38;5;93m'
 DARKGRAY='\e[38;5;238m'
 LIGHTGRAY='\e[38;5;248m'
@@ -139,7 +140,15 @@ step_header_string() {
   OUTPUT_TEXT="$*"
   # Strip ANSI color codes for length calculation
   local TEXT_COUNT=$(echo -e "${OUTPUT_TEXT}" | sed $'s/\e\\[[0-9;]*m//g').
-  COLORIZE_STRING CYAN "$(COLORIZE_PADDING "${PADDING:0:6}" 17 21) ${OUTPUT_TEXT} $(COLORIZE_PADDING "${PADDING:$(( ${#TEXT_COUNT} )):$(( 80 - (${#TEXT_COUNT}) ))}" 21 17)\n"
+  COLORIZE_STRING LIGHTBLUE "$(COLORIZE_PADDING "${PADDING:0:6}" 17 21) ${OUTPUT_TEXT} $(COLORIZE_PADDING "${PADDING:$(( ${#TEXT_COUNT} + 6 )):$(( 80 - (${#TEXT_COUNT}) ))}" 21 17)\n"
+}
+
+sub_step_header_string() {
+  PADDING="================================================================================"
+  OUTPUT_TEXT="$*"
+  # Strip ANSI color codes for length calculation
+  local TEXT_COUNT=$(echo -e "${OUTPUT_TEXT}" | sed $'s/\e\\[[0-9;]*m//g').
+  COLORIZE_STRING BLUEPURPLE "${OUTPUT_TEXT} $(COLORIZE_PADDING "${PADDING:$(( ${#TEXT_COUNT} + 5 )):$(( 80 - (${#TEXT_COUNT}) ))}" 21 17)\n"
 }
 
 step_footer_string() {
@@ -149,11 +158,26 @@ step_footer_string() {
 }
 
 action_string() {
+  COLORIZE_STRING CYAN "$*"
+}
+
+info_string() {
   COLORIZE_STRING LIGHTBLUE "$*"
+}
+
+list_header() {
+  COLORIZE_STRING LIGHTBLUE "$*:\n"
+}
+
+list_item() {
+  COLORIZE_STRING LIGHTBLUE "   -- $*\n"
 }
 
 error_string() {
   COLORIZE_STRING LIGHTRED "$*"
+}
+warning_string() {
+  COLORIZE_STRING YELLOW "$*"
 }
 
 run_cmd(){
@@ -175,7 +199,7 @@ execute() {
   shift 1
   local COMMAND="$*"
   action_string ${TASK_STEP_OUTPUT}
-  run_cmd "${COMMAND}"
+  run_cmd ${COMMAND}
 }
 
 check_vars() {
@@ -233,20 +257,16 @@ declare -A VS_STATE_DOTNET_VERSION=(
 VS_VERSION="${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}.${VS_VERSION_ARRAY[BUILD]}${VS_VERSION_ARRAY[DEVHASH]}"
 DOTNET_VERSION=${VS_STATE_DOTNET_VERSION[${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}.${VS_VERSION_ARRAY[BUILD]}]}
 
-#section_header_string "Docker Build"
-#step_header_string "Initializing Build Environment"
-#if [ ! "$MSYSTEM" = "MINGW64" ]; then
-#export PYENV_ROOT="$HOME/.pyenv"
-#[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-#eval "$(pyenv init - bash)"
-#eval "$(pyenv virtualenv-init -)"
-#fi
-
+section_header_string "Container Build"
+step_header_string "Environment Initialization"
 # Installing GitHub CLI if not present (required for GitHub Release Creation)
+sub_step_header_string "Install Github CLI"
 if ! command -v gh &>/dev/null; then
-  action_string "GitHub CLI (${LAVENDER}gh${NC}) not found. Installing via direct binary download..."
+  warning_string "GitHub CLI (${LAVENDER}gh${NC}) not found."
+  action_string "Installing Github CLI via direct binary download"
   GH_INSTALL_DIR="${HOME}/bin"
   mkdir -p "${GH_INSTALL_DIR}"
+  action_string "Fetching latest release information from GitHub API"
   GH_LATEST_VERSION=$(curl -fsSL "https://api.github.com/repos/cli/cli/releases/latest" | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
   GH_DOWNLOAD_URL="https://github.com/cli/cli/releases/download/v${GH_LATEST_VERSION}/gh_${GH_LATEST_VERSION}_windows_amd64.zip"
   GH_ZIP_PATH="${TEMP:-/tmp}/gh_${GH_LATEST_VERSION}_windows_amd64.zip"
@@ -255,43 +275,44 @@ if ! command -v gh &>/dev/null; then
   run_cmd unzip -jo "${GH_ZIP_PATH}" "bin/gh.exe" -d "${GH_INSTALL_DIR}"
   rm -f "${GH_ZIP_PATH}"
   export PATH="${GH_INSTALL_DIR}:${PATH}"
-  action_string "GitHub CLI (${LAVENDER}$(gh --version | head -1)${NC}) installed successfully to ${LAVENDER}${GH_INSTALL_DIR}${NC}."
+  success_string "GitHub CLI (${LAVENDER}$(gh --version | head -1)${NC}) installed successfully to ${LAVENDER}${GH_INSTALL_DIR}${NC}."
 else
   action_string "GitHub CLI (${LAVENDER}$(gh --version | head -1)${NC}) already installed."
 fi
 
-# Initializing Python Environment
-execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv local "${PYTHON_VERSION}"
-execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION} -m pip install pipenv requests"
-execute "Installing Python Dependencies into Virtual Environment." "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
-execute "Purging Local Git Tags." "git tag -d $(git tag -l)"
-execute "Pulling Git Tags." "git fetch origin --tags"
+sub_step_header_string "Cleaning Git Tags for Semver"
+execute "Purging Local Git Tags" "git tag -d $(git tag -l)"
+execute "Pulling Git Tags" "git fetch origin --tags"
 action_string "Pulled (${LAVENDER}$(git --no-pager tag | wc -l)${NC}) tags from Repository."
 
-# Generating Semver and Build Environment Variables
-action_string "Generating Semver Arguments."
-SEMVER_ARGS="--name vintagestory --env-file --vs-version ${VS_VERSION}"
+sub_step_header_string "Generating Semver Arguments"
+SEMVER_ARGS="--name vintagestory --dev --env-file --vs-version ${VS_VERSION} --no-create-git-tag"
 
 execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS}${NC}" python ./semver.py "${SEMVER_ARGS}"
 action_string "Loading Build Environment Variables"
 source build.env
 
-action_string "Building Container Tag Matrix"
+sub_step_header_string "Constructing Python Environment"
+if [ ! "$MSYSTEM" = "MINGW64" ]; then
+  export PYENV_ROOT="$HOME/.pyenv"
+  [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+  info_string "Initializing pyenv environment for Python version management."
+  eval "$(pyenv init - bash)"
+fi
+execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv virtualenv "${PYTHON_VERSION}" "vs-docker-build-env-${DOCKER_VERSION_NEW}"
+execute "Generating Virtual Environment ${LAVENDER}vs-docker-build-env-${DOCKER_VERSION_NEW}${NC}" pyenv-venv install ${PYTHON_VERSION} "vs-docker-build-env-${DOCKER_VERSION_NEW}"
+execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION} -m pip install pipenv requests"
+execute "Installing Python Dependencies into Virtual Environment" "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
+
 declare TAG_MATRIX=(
-  "${VS_VERSION}-${DOCKER_VERSION_NEW}-python3-trixie-slim"
-  "${VS_VERSION}-${DOCKER_VERSION_NEW}"
   "${DOCKER_VERSION_NEW}-python3-trixie-slim"
   "${DOCKER_VERSION_NEW}"
-  "${VS_VERSION}"
-  "${VS_VERSION_STATE}"
 )
 
 declare REPOSITORIES=(
   ghcr.io/darkmatterproductions/vintagestory
   ralnoc/vintagestory
-  registry.dmpsys.in/vintagestory
 )
-
 
 step_header_string "GitHub Release"
 action_string "Creating GitHub Release for tag: ${LAVENDER}${DOCKER_TAG}${NC}"
@@ -315,19 +336,23 @@ GH_TOKEN="${GHCR_TOKEN}" gh release create "${DOCKER_TAG}" \
   "$(if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then echo "--prerelease"; fi)" > ./gh-release-publish.log 2>&1
 
 step_header_string "Vintage Story Docker Image Build"
-action_string "Image Version: ${LAVENDER}${VERSION}${NC} State: ${LAVENDER}${VS_VERSION_STATE}${NC} Version: ${LAVENDER}${VS_VERSION}${NC}"
-action_string ".Net Version: ${LAVENDER}${DOTNET_VERSION}${NC} Dev Image Tag: ${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}"
-execute "Building Docker image" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-execute "Pushing (${LAVENDER}registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}${NC}) to Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
+info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
+list_header "Docker Image Tags"
+for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
+
+list_header "Target Repositories"
+for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
+execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VERSION="${VERSION}" --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+
 step_header_string "Publishing Images"
-
-
 execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
 for repo in "${REPOSITORIES[@]}"; do
   action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
   for tag in "${TAG_MATRIX[@]}";do
     action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag ${repo}:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
     execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
   done
   if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
@@ -336,8 +361,6 @@ for repo in "${REPOSITORIES[@]}"; do
     execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
   fi
 done
-
-step_footer_string
 step_header_string "Build Cleanup"
 execute "Pruning unused images" docker image prune -f
 execute "Removing ${LAVENDER}build.env${NC} File" rm build.env
