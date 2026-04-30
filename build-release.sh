@@ -279,6 +279,18 @@ if ! command -v gh &>/dev/null; then
 else
   action_string "GitHub CLI (${LAVENDER}$(gh --version | head -1)${NC}) already installed."
 fi
+section_header_string "Docker Build"
+step_header_string "Environment Initialization"
+if [ ! "$MSYSTEM" = "MINGW64" ]; then
+  export PYENV_ROOT="$HOME/.pyenv"
+  [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+  eval "$(pyenv init - bash)"
+  eval "$(pyenv virtualenv-init -)"
+fi
+sub_step_header_string "Initializing Python Environment"
+execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv local "${PYTHON_VERSION}"
+execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION} -m pip install pipenv requests"
+execute "Installing Python Dependencies into Virtual Environment" "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
 
 sub_step_header_string "Cleaning Git Tags for Semver"
 execute "Purging Local Git Tags" "git tag -d $(git tag -l)"
@@ -291,18 +303,6 @@ SEMVER_ARGS="--name vintagestory --env-file --vs-version ${VS_VERSION}"
 execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS}${NC}" python ./semver.py "${SEMVER_ARGS}"
 action_string "Loading Build Environment Variables"
 source build.env
-
-sub_step_header_string "Constructing Python Environment"
-if [ ! "$MSYSTEM" = "MINGW64" ]; then
-  export PYENV_ROOT="$HOME/.pyenv"
-  [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-  info_string "Initializing pyenv environment for Python version management."
-  eval "$(pyenv init - bash)"
-fi
-execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv virtualenv "${PYTHON_VERSION}" "vs-docker-build-env-${DOCKER_VERSION_NEW}"
-execute "Generating Virtual Environment ${LAVENDER}vs-docker-build-env-${DOCKER_VERSION_NEW}${NC}" pyenv-venv install ${PYTHON_VERSION} "vs-docker-build-env-${DOCKER_VERSION_NEW}"
-execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION} -m pip install pipenv requests"
-execute "Installing Python Dependencies into Virtual Environment" "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
 
 declare TAG_MATRIX=(
   "${DOCKER_VERSION_NEW}-python3-trixie-slim"
