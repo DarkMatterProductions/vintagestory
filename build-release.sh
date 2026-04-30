@@ -250,12 +250,12 @@ PYTHON_VERSION="3.11.9"
 PYTHON_SHORT_VERSION="$(echo "${PYTHON_VERSION}" | awk -F'.' '{ print $1"."$2 }')"
 
 declare -A VS_STATE_DOTNET_VERSION=(
-  [1.21.6]="8.0"
-  [1.22.0]="10.0"
+  [1.21]="8.0"
+  [1.22]="10.0"
 )
 
 VS_VERSION="${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}.${VS_VERSION_ARRAY[BUILD]}${VS_VERSION_ARRAY[DEVHASH]}"
-DOTNET_VERSION=${VS_STATE_DOTNET_VERSION[${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}.${VS_VERSION_ARRAY[BUILD]}]}
+DOTNET_VERSION=${VS_STATE_DOTNET_VERSION[${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION_ARRAY[MINOR]}]}
 
 section_header_string "Container Build"
 step_header_string "Environment Initialization"
@@ -307,6 +307,9 @@ source build.env
 declare TAG_MATRIX=(
   "${DOCKER_VERSION_NEW}-python3-trixie-slim"
   "${DOCKER_VERSION_NEW}"
+  "${DOCKER_TAG}-python3-trixie-slim"
+  "${DOCKER_TAG}"
+  "${VS_VERSION}"
 )
 
 declare REPOSITORIES=(
