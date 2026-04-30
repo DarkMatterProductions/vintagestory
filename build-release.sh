@@ -286,7 +286,7 @@ execute "Pulling Git Tags" "git fetch origin --tags"
 action_string "Pulled (${LAVENDER}$(git --no-pager tag | wc -l)${NC}) tags from Repository."
 
 sub_step_header_string "Generating Semver Arguments"
-SEMVER_ARGS="--name vintagestory --dev --env-file --vs-version ${VS_VERSION} --no-create-git-tag"
+SEMVER_ARGS="--name vintagestory --env-file --vs-version ${VS_VERSION}"
 
 execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS}${NC}" python ./semver.py "${SEMVER_ARGS}"
 action_string "Loading Build Environment Variables"
