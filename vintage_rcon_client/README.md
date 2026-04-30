@@ -46,13 +46,13 @@ cp config.template.yaml config.yaml
 
 Configure the RCON server connection settings. These control how the RCON web client connects to the Vintage Story server's RCON interface.
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_SERVER_CFG_PORT` | Integer | `42425` | Port number the Vintage Story RCON server listens on |
-| `VS_RCON_SERVER_CFG_IP` | String | `127.0.0.1` | IP address of the Vintage Story RCON server |
-| `VS_RCON_SERVER_CFG_PASSWORD` | String | `changeme` | Password for authenticating to the RCON server<br>**⚠️ CHANGE IN PRODUCTION** |
-| `VS_RCON_SERVER_CFG_TIMEOUT` | Integer | `20` | Connection timeout in seconds |
-| `VS_RCON_SERVER_CFG_MAXCONNECTIONS` | Integer | `10` | Maximum number of concurrent RCON connections allowed |
+| Variable                            | Type    | Default     | Description                                                                   |
+|-------------------------------------|---------|-------------|-------------------------------------------------------------------------------|
+| `VS_RCON_SERVER_CFG_PORT`           | Integer | `42425`     | Port number the Vintage Story RCON server listens on                          |
+| `VS_RCON_SERVER_CFG_IP`             | String  | `127.0.0.1` | IP address of the Vintage Story RCON server                                   |
+| `VS_RCON_SERVER_CFG_PASSWORD`       | String  | `changeme`  | Password for authenticating to the RCON server<br>**⚠️ CHANGE IN PRODUCTION** |
+| `VS_RCON_SERVER_CFG_TIMEOUT`        | Integer | `20`        | Connection timeout in seconds                                                 |
+| `VS_RCON_SERVER_CFG_MAXCONNECTIONS` | Integer | `10`        | Maximum number of concurrent RCON connections allowed                         |
 
 **Example:**
 ```bash
@@ -77,40 +77,39 @@ with the server's RCON interface, so the RCON server must be enabled and properl
 
 #### Server Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SERVER_HOST` | String | `0.0.0.0` | Host address the web client listens on (0.0.0.0 for all interfaces) |
-| `VS_RCON_CLIENT_CFG_SERVER_PORT` | Integer | `5000` | Port number the web client listens on |
-| `VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY` | String | `vintage-story-rcon-...` | Secret key for session encryption<br>**⚠️ CHANGE IN PRODUCTION** |
+| Variable                               | Type    | Default                  | Description                                                         |
+|----------------------------------------|---------|--------------------------|---------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_SERVER_HOST`       | String  | `0.0.0.0`                | Host address the web client listens on (0.0.0.0 for all interfaces) |
+| `VS_RCON_CLIENT_CFG_SERVER_PORT`       | Integer | `5000`                   | Port number the web client listens on                               |
+| `VS_RCON_CLIENT_CFG_SERVER_SECRET_KEY` | String  | `vintage-story-rcon-...` | Secret key for session encryption<br>**⚠️ CHANGE IN PRODUCTION**    |
 
 #### RCON Connection Settings
 
-| Variable | Type | Default | Description                                                                                                              |
-|----------|------|---------|--------------------------------------------------------------------------------------------------------------------------|
-| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_HOST` | String | `localhost` | Default RCON host to connect to                                                                                          |
-| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_PORT` | Integer | `42425` | Default RCON port to connect to                                                                                          |
-| `VS_RCON_CLIENT_CFG_RCON_PASSWORD` | String | `changeme` | RCON password for authentication<br>**⚠️ CHANGE IN PRODUCTION**<br><i>Value must match `VS_RCON_SERVER_CFG_PASSWORD`</i> |
-| `VS_RCON_CLIENT_CFG_RCON_LOCKED_ADDRESS` | Boolean | `false` | Lock RCON connection to default host/port (true/false)                                                                   |
-| `VS_RCON_CLIENT_CFG_RCON_TIMEOUT` | Integer | `10` | RCON connection timeout in seconds                                                                                       |
-| `VS_RCON_CLIENT_CFG_RCON_MAX_MESSAGE_SIZE` | Integer | `4096` | Maximum RCON message size in bytes                                                                                       |
+| Variable                                   | Type    | Default     | Description                                            |
+|--------------------------------------------|---------|-------------|--------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_HOST`     | String  | `localhost` | Default RCON host to connect to                        |
+| `VS_RCON_CLIENT_CFG_RCON_DEFAULT_PORT`     | Integer | `42425`     | Default RCON port to connect to                        |
+| `VS_RCON_CLIENT_CFG_RCON_LOCKED_ADDRESS`   | Boolean | `false`     | Lock RCON connection to default host/port (true/false) |
+| `VS_RCON_CLIENT_CFG_RCON_TIMEOUT`          | Integer | `10`        | RCON connection timeout in seconds                     |
+| `VS_RCON_CLIENT_CFG_RCON_MAX_MESSAGE_SIZE` | Integer | `4096`      | Maximum RCON message size in bytes                     |
 
 #### Security Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_REQUIRE_AUTH` | Boolean | `true` | Require authentication to access the web client |
-| `VS_RCON_CLIENT_CFG_SECURITY_TRADITIONAL_LOGIN_ENABLED` | Boolean | `true` | Enable traditional username/password login |
-| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_USERNAME` | String | `admin` | Default username for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
-| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_PASSWORD` | String | `changeme` | Default password for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
-| `VS_RCON_CLIENT_CFG_SECURITY_MAX_LOGIN_ATTEMPTS` | Integer | `5` | Maximum login attempts before lockout |
-| `VS_RCON_CLIENT_CFG_SECURITY_LOCKOUT_DURATION` | Integer | `300` | Account lockout duration in seconds after max attempts |
+| Variable                                                | Type    | Default    | Description                                                           |
+|---------------------------------------------------------|---------|------------|-----------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_REQUIRE_AUTH`              | Boolean | `true`     | Require authentication to access the web client                       |
+| `VS_RCON_CLIENT_CFG_SECURITY_TRADITIONAL_LOGIN_ENABLED` | Boolean | `true`     | Enable traditional username/password login                            |
+| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_USERNAME`          | String  | `admin`    | Default username for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
+| `VS_RCON_CLIENT_CFG_SECURITY_DEFAULT_PASSWORD`          | String  | `changeme` | Default password for traditional login<br>**⚠️ CHANGE IN PRODUCTION** |
+| `VS_RCON_CLIENT_CFG_SECURITY_MAX_LOGIN_ATTEMPTS`        | Integer | `5`        | Maximum login attempts before lockout                                 |
+| `VS_RCON_CLIENT_CFG_SECURITY_LOCKOUT_DURATION`          | Integer | `300`      | Account lockout duration in seconds after max attempts                |
 
 #### OAuth Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_ENABLED` | Boolean | `true` | Enable OAuth authentication providers |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_AUTHORIZED_EMAILS` | String | `admin@example.com,...` | Comma-separated list of authorized email addresses for OAuth login |
+| Variable                                              | Type    | Default                 | Description                                                        |
+|-------------------------------------------------------|---------|-------------------------|--------------------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_ENABLED`           | Boolean | `true`                  | Enable OAuth authentication providers                              |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_AUTHORIZED_EMAILS` | String  | `admin@example.com,...` | Comma-separated list of authorized email addresses for OAuth login |
 
 **⚠️ Important Note:** If you do not have access to a reverse proxy (such as NGINX or HAProxy) that can handle SSL/TLS
 certificates and port mapping, you should **disable OAuth** and use traditional username/password authentication
@@ -129,20 +128,20 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ###### Provider Registration Links
 
-| Provider | Registration URL |
-|----------|-----------------|
-| Google   | https://console.cloud.google.com/ |
-| Facebook | https://developers.facebook.com/ |
+| Provider | Registration URL                       |
+|----------|----------------------------------------|
+| Google   | https://console.cloud.google.com/      |
+| Facebook | https://developers.facebook.com/       |
 | GitHub   | https://github.com/settings/developers |
-| Apple    | https://developer.apple.com/account/ |
+| Apple    | https://developer.apple.com/account/   |
 
 ##### Google OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_ENABLED` | Boolean | `true` | Enable Google OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_ID` | String | `your-google-client-id...` | Google OAuth client ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_SECRET` | String | `your-google-client-secret` | Google OAuth client secret |
+| Variable                                                 | Type    | Default                     | Description                |
+|----------------------------------------------------------|---------|-----------------------------|----------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_ENABLED`       | Boolean | `true`                      | Enable Google OAuth login  |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_ID`     | String  | `your-google-client-id...`  | Google OAuth client ID     |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GOOGLE_CLIENT_SECRET` | String  | `your-google-client-secret` | Google OAuth client secret |
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
@@ -155,11 +154,11 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ##### Facebook OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_ENABLED` | Boolean | `false` | Enable Facebook OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_ID` | String | `your-facebook-app-id` | Facebook OAuth app ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_SECRET` | String | `your-facebook-app-secret` | Facebook OAuth app secret |
+| Variable                                                   | Type    | Default                    | Description                 |
+|------------------------------------------------------------|---------|----------------------------|-----------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_ENABLED`       | Boolean | `false`                    | Enable Facebook OAuth login |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_ID`     | String  | `your-facebook-app-id`     | Facebook OAuth app ID       |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_FACEBOOK_CLIENT_SECRET` | String  | `your-facebook-app-secret` | Facebook OAuth app secret   |
 
 1. Go to [Facebook Developers](https://developers.facebook.com/)
 2. Create a new app or select an existing one
@@ -170,11 +169,11 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ##### GitHub OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_ENABLED` | Boolean | `false` | Enable GitHub OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_ID` | String | `your-github-client-id` | GitHub OAuth client ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_SECRET` | String | `your-github-client-secret` | GitHub OAuth client secret |
+| Variable                                                 | Type    | Default                     | Description                |
+|----------------------------------------------------------|---------|-----------------------------|----------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_ENABLED`       | Boolean | `false`                     | Enable GitHub OAuth login  |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_ID`     | String  | `your-github-client-id`     | GitHub OAuth client ID     |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_GITHUB_CLIENT_SECRET` | String  | `your-github-client-secret` | GitHub OAuth client secret |
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
@@ -184,21 +183,21 @@ _**IMPORTANT NOTE**: Be aware most providers require HTTPS for the URL._
 
 ##### Apple OAuth
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_ENABLED` | Boolean | `false` | Enable Apple OAuth login |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_ID` | String | `your-apple-service-id` | Apple OAuth service ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_SECRET` | String | `your-apple-client-secret` | Apple OAuth client secret |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_TEAM_ID` | String | `your-apple-team-id` | Apple Developer Team ID |
-| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_KEY_ID` | String | `your-apple-key-id` | Apple OAuth key ID |
+| Variable                                                | Type    | Default                    | Description               |
+|---------------------------------------------------------|---------|----------------------------|---------------------------|
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_ENABLED`       | Boolean | `false`                    | Enable Apple OAuth login  |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_ID`     | String  | `your-apple-service-id`    | Apple OAuth service ID    |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_CLIENT_SECRET` | String  | `your-apple-client-secret` | Apple OAuth client secret |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_TEAM_ID`       | String  | `your-apple-team-id`       | Apple Developer Team ID   |
+| `VS_RCON_CLIENT_CFG_SECURITY_OAUTH_APPLE_KEY_ID`        | String  | `your-apple-key-id`        | Apple OAuth key ID        |
 
 #### Logging Settings
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `VS_RCON_CLIENT_CFG_LOGGING_LOG_COMMANDS` | Boolean | `true` | Log RCON commands to file |
-| `VS_RCON_CLIENT_CFG_LOGGING_LOG_FILE` | String | `logs/rcon.log` | Path to RCON client log file |
-| `VS_RCON_CLIENT_CFG_LOGGING_LOG_LEVEL` | String | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
+| Variable                                  | Type    | Default         | Description                                           |
+|-------------------------------------------|---------|-----------------|-------------------------------------------------------|
+| `VS_RCON_CLIENT_CFG_LOGGING_LOG_COMMANDS` | Boolean | `true`          | Log RCON commands to file                             |
+| `VS_RCON_CLIENT_CFG_LOGGING_LOG_FdILE`    | String  | `logs/rcon.log` | Path to RCON client log file                          |
+| `VS_RCON_CLIENT_CFG_LOGGING_LOG_LEVEL`    | String  | `INFO`          | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) |
 
 **Example (RCON with OAuth):**
 ```bash

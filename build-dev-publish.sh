@@ -257,10 +257,10 @@ DOTNET_VERSION=${VS_STATE_DOTNET_VERSION[${VS_VERSION_ARRAY[MAJOR]}.${VS_VERSION
 section_header_string "Docker Build"
 step_header_string "Environment Initialization"
 if [ ! "$MSYSTEM" = "MINGW64" ]; then
-  export PYENV_ROOT="$HOME/.pyenv"
-  [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-  eval "$(pyenv init - bash)"
-  eval "$(pyenv virtualenv-init -)"
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - bash)"
+eval "$(pyenv virtualenv-init -)"
 fi
 sub_step_header_string "Initializing Python Environment"
 execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv local "${PYTHON_VERSION}"
@@ -280,11 +280,12 @@ action_string "Loading Build Environment Variables"
 source build.env
 
 declare TAG_MATRIX=(
-  "${DOCKER_VERSION_NEW}-python3-trixie-slim"
-  "${DOCKER_VERSION_NEW}"
+  "${DOCKER_VERSION_NEW}-beta-python3-trixie-slim"
+  "${DOCKER_VERSION_NEW}-beta"
 )
 
 declare REPOSITORIES=(
+  ghcr.io/darkmatterproductions/vintagestory
 )
 
 
@@ -296,7 +297,7 @@ for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
 
 list_header "Target Repositories"
 for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
-execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VERSION="${VERSION}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build  --build-arg VERSION="${VERSION}" --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
 execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
 
 step_header_string "Publishing Images"

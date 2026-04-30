@@ -127,7 +127,11 @@ if [[ "${VS_RCON_ENABLED}" == true ]]; then
     curl -sL "${rcon_mod_url}" -o "${DATAPATH}/Mods/$(basename ${rcon_mod_url})"
     mkdir -p /vintagestory/data/ModConfig
   fi
-  python /vintage_rcon_client/generate_vsrcon_config.py -f /vintagestory/data/ModConfig/vsrcon.json
+  CURR_DIR=$(pwd)
+  cd /vintage_rcon_client
+  python ./generate_vsrcon_config.py -f /vintagestory/data/ModConfig/vsrcon.json
+  python ./generate_vsrconclient_config.py -f /vintage_rcon_client/client-config.yaml
+  cd ${CURR_DIR}
 else
   echo "RCON mod not enabled, skipping download."
 fi

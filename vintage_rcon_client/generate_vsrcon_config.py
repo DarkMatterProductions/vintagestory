@@ -19,6 +19,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Dict
 
 
 def get_env_value(key, default_value):
@@ -32,8 +33,8 @@ def get_env_value(key, default_value):
     Returns:
         Value from environment or default, converted to appropriate type
     """
-    env_key = f"VS_RCON_SERVER_CFG_{key.upper()}"
-    env_value = os.environ.get(env_key)
+    # env_key = f"VS_RCON_SERVER_CFG_{key.upper()}"
+    env_value = os.environ.get(key.upper())
 
     if env_value is not None:
         # Convert to appropriate type based on default value
@@ -41,7 +42,7 @@ def get_env_value(key, default_value):
             try:
                 return int(env_value)
             except ValueError:
-                print(f"Warning: Invalid integer value for {env_key}='{env_value}', using default: {default_value}",
+                print(f"Warning: Invalid integer value for {key}='{env_value}', using default: {default_value}",
                       file=sys.stderr)
                 return default_value
         elif isinstance(default_value, str):
@@ -52,20 +53,30 @@ def get_env_value(key, default_value):
     return default_value
 
 
-def generate_config():
+def generate_config(arguments):
     """
     Generate vsrcon.json configuration from environment variables.
 
     Returns:
         dict: Configuration dictionary
     """
-    config = {
-        "Port": get_env_value("port", 42425),
-        "IP": get_env_value("ip", "127.0.0.1"),
-        "Password": get_env_value("password", "changeme"),
-        "Timeout": get_env_value("timeout", 20),
-        "MaxConnections": get_env_value("maxconnections", 10)
-    }
+    env_vars = [
+        {"var_name": "VS_RCON_SERVER_CFG_PORT", "default_value": "42425", "config_key": "Port"},
+        {"var_name": "VS_RCON_SERVER_CFG_IP", "default_value": "127.0.0.1", "config_key": "IP"},
+        {"var_name": "VS_RCON_SERVER_CFG_PASSWORD", "default_value": "changeme", "config_key": "Password"},
+        {"var_name": "VS_RCON_SERVER_CFG_TIMEOUT", "default_value": "20", "config_key": "Timeout"},
+        {"var_name": "VS_RCON_SERVER_CFG_MAXCONNECTIONS", "default_value": "10", "config_key": "MaxConnections"},
+    ]
+    config = {}
+    for cidx in range(len(env_vars)):
+        config[env_vars[cidx]["config_key"]] = get_env_value(env_vars[cidx]["var_name"], env_vars[cidx]["default_value"])
+        if arguments.show_env:
+            # Show environment variables if requested
+            print("Environment variables:")
+            # Mask password
+            value = '***' if 'password' in env_vars[cidx]['var_name'] else config[env_vars[cidx]['config_key']]
+            print(f"  {env_vars[cidx]['var_name']} = {value}")
+            print()
 
     return config
 
@@ -118,26 +129,8 @@ Examples:
 
     args = parser.parse_args()
 
-    # Show environment variables if requested
-    if args.show_env:
-        print("Environment variables:")
-        env_vars = [
-            {"var_name": "VS_RCON_SERVER_CFG_PORT", "default_value": "42425"},
-            {"var_name": "VS_RCON_SERVER_CFG_IP", "default_value": "127.0.0.1"},
-            {"var_name": "VS_RCON_SERVER_CFG_PASSWORD", "default_value": "changeme"},
-            {"var_name": "VS_RCON_SERVER_CFG_TIMEOUT", "default_value": "20"},
-            {"var_name": "VS_RCON_SERVER_CFG_MAXCONNECTIONS", "default_value": "10"}
-        ]
-        for var in env_vars:
-            value = os.environ.get(var["var_name"], var["default_value"])
-            # Mask password
-            if "PASSWORD" in var["var_name"]:
-                value = "***" + value[-3:] if len(value) > 3 else "***"
-            print(f"  {var['var_name']} = {value}")
-        print()
-
     # Generate configuration
-    config = generate_config()
+    config = generate_config(args)
 
     # Create output directory if it doesn't exist
     output_path = Path(args.file)
