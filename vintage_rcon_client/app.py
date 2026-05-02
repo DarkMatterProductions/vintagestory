@@ -4,6 +4,7 @@ Async Application with FastAPI and python-socketio
 JWT-based authentication for unified session management
 """
 import sys
+from argparse import Namespace
 
 import yaml
 import logging
@@ -25,6 +26,8 @@ from authlib.integrations.starlette_client import OAuth
 import uvicorn
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+
+from output import strip_ansi_color_codes, color_action, color_action_var
 
 # Initialize SocketIO server with asyncio support
 sio = socketio.AsyncServer(
@@ -847,9 +850,29 @@ async def handle_rcon_status(sid):
         }, to=sid)
 
 
+def display_configs(args: Namespace, cfg, prefix="", indent=0):
+    """Recursively iterate over config and apply env_override for each leaf item."""
+    for key, value in cfg.items():
+        key_path = f"{prefix}_{key}" if prefix else key
+        msg = color_action(f"{' ' * indent * 2}Processing config key: {color_action_var(key_path)}")
+        print(strip_ansi_color_codes(msg) if args.monochrome else msg)
+        if isinstance(value, dict):
+            msg = color_action(f"{' ' * indent * 2}Recursing into nested config for key: {color_action_var(key_path)}")
+            print(strip_ansi_color_codes(msg) if args.monochrome else msg)
+            display_configs(args, value, key_path, indent=indent + 1)
+        else:
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                msg = color_action(f"{' ' * indent * 2}Key Value: {color_action_var(key_path)} with the value: {color_action_var(value)}")
+                print(strip_ansi_color_codes(msg) if args.monochrome else msg)
+            else:
+                msg = color_action(f"{' ' * indent * 2}Key Value: {color_action_var(key_path)}")
+                print(strip_ansi_color_codes(msg) if args.monochrome else msg)
+
+
 def run():
     """Run the FastAPI application with uvicorn"""
     load_config()
+    display_configs(args=Namespace(monochrome=False), cfg=config)
 
     host = config.get('server', {}).get('host', '0.0.0.0')
     port = config.get('server', {}).get('port', 5000)

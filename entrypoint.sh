@@ -130,7 +130,7 @@ if [[ "${VS_RCON_ENABLED}" == true ]]; then
   CURR_DIR=$(pwd)
   cd /vintage_rcon_client
   python ./generate_vsrcon_config.py -f /vintagestory/data/ModConfig/vsrcon.json
-  python ./generate_vsrconclient_config.py -f /vintage_rcon_client/client-config.yaml
+  python ./generate_vsrconclient_config.py -f /vintage_rcon_client/client-config.yaml --monochrome
   cd ${CURR_DIR}
 else
   echo "RCON mod not enabled, skipping download."
