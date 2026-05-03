@@ -148,7 +148,7 @@ done
 
 # Ensure proper ownership of everything under the data directory
 echo "Setting ownership of data directory..."
-chown -R "${UID_NUMBER}":"${GID_NUMBER}" "${DATAPATH}" 2>/dev/null || true
+chown -R "${UID_NUMBER}":"${GID_NUMBER}" "${DATAPATH}"
 
 # Change to server directory
 echo "Changing to server directory: $VSPATH"
