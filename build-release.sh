@@ -328,32 +328,32 @@ declare REPOSITORIES=(
   ralnoc/vintagestory
 )
 
-#step_header_string "Vintage Story Docker Image Build"
-#info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
-#info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
-#list_header "Docker Image Tags"
-#for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
-#
-#list_header "Target Repositories"
-#for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
-#execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VERSION="${VERSION}" --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-#execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
-#
-#step_header_string "Publishing Images"
-#execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
-#for repo in "${REPOSITORIES[@]}"; do
-#  action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
-#  for tag in "${TAG_MATRIX[@]}";do
-#    action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
-#    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
-#    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
-#  done
-#  if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
-#    action_string "Processing (${LAVENDER}${VS_VERSION_STATE}${NC}) Image Tag: ${LAVENDER}latest${NC}"
-#    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag ${repo}:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:latest"
-#    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
-#  fi
-#done
+step_header_string "Vintage Story Docker Image Build"
+info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
+info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
+list_header "Docker Image Tags"
+for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
+
+list_header "Target Repositories"
+for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
+execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VERSION="${VERSION}" --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+
+step_header_string "Publishing Images"
+execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
+for repo in "${REPOSITORIES[@]}"; do
+  action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
+  for tag in "${TAG_MATRIX[@]}";do
+    action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
+  done
+  if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
+    action_string "Processing (${LAVENDER}${VS_VERSION_STATE}${NC}) Image Tag: ${LAVENDER}latest${NC}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag ${repo}:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:latest"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
+  fi
+done
 
 step_header_string "GitHub Release"
 RELEASE_NOTES="## Vintage Story Docker Image Release

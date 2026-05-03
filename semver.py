@@ -94,7 +94,11 @@ def get_last_version() -> str:
         )
         tags = result.stdout.strip().split('\n')
         # Filter to only semantic version tags (e.g., 1.0.0)
-        version_tags = [tag for tag in tags if tag and re.match(r'^\d+\.\d+\.\d+$', tag)]
+        version_tags = [
+            re.match(
+                r'^((?P<vs_version>\d+\.\d+\.\d+)-)*(?P<version>\d+\.\d+\.\d+)$', tag).groupdict()["version"]
+            for tag in tags if re.match(r'^((?P<vs_version>\d+\.\d+\.\d+)-)*(?P<version>\d+\.\d+\.\d+)$', tag) is not None
+        ]
 
         if not version_tags:
             return '0.0.0'
