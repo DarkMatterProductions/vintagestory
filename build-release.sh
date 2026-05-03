@@ -317,27 +317,6 @@ declare REPOSITORIES=(
   ralnoc/vintagestory
 )
 
-step_header_string "GitHub Release"
-action_string "Creating GitHub Release for tag: ${LAVENDER}${DOCKER_TAG}${NC}"
-RELEASE_NOTES="## Vintage Story Docker Image Release
-
-**Vintage Story Version:** \`${VS_VERSION}\`
-**Docker Image Version:** \`${DOCKER_TAG}\`
-**Release State:** \`${VS_VERSION_STATE}\`
-
-### Docker Image Tags
-$(for tag in "${TAG_MATRIX[@]}"; do echo "- \`${tag}\`"; done)
-$(if [[ "${VS_VERSION_STATE}" == "stable" ]]; then echo "- \`latest\`"; fi)
-
-### Available Repositories
-$(for repo in "${REPOSITORIES[@]}"; do echo "- \`${repo}\`"; done)"
-
-action_string "Creating GitHub Release: ${LAVENDER}${DOCKER_TAG}${NC}"
-GH_TOKEN="${GHCR_TOKEN}" gh release create "${DOCKER_TAG}" \
-  --title "Vintage Story ${VS_VERSION} (Docker ${DOCKER_VERSION_NEW})" \
-  --notes "${RELEASE_NOTES}" \
-  "$(if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then echo "--prerelease"; fi)" > ./gh-release-publish.log 2>&1
-
 step_header_string "Vintage Story Docker Image Build"
 info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
 info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
@@ -364,6 +343,31 @@ for repo in "${REPOSITORIES[@]}"; do
     execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
   fi
 done
+
+step_header_string "GitHub Release"
+action_string "Creating GitHub Release for tag: ${LAVENDER}${DOCKER_TAG}${NC}"
+RELEASE_NOTES="## Vintage Story Docker Image Release
+
+**Vintage Story Version:** \`${VS_VERSION}\`
+**Docker Image Version:** \`${DOCKER_TAG}\`
+**Release State:** \`${VS_VERSION_STATE}\`
+
+### Docker Image Tags
+$(for tag in "${TAG_MATRIX[@]}"; do echo "- \`${tag}\`"; done)
+$(if [[ "${VS_VERSION_STATE}" == "stable" ]]; then echo "- \`latest\`"; fi)
+
+### Available Repositories
+$(for repo in "${REPOSITORIES[@]}"; do echo "- \`${repo}\`"; done)"
+cat > ./release-notes.md <<EOF
+${RELEASE_NOTES}
+EOF
+
+action_string "Creating GitHub Release: ${LAVENDER}${DOCKER_TAG}${NC}"
+GH_TOKEN="${GHCR_TOKEN}" gh release create "${DOCKER_TAG}" \
+  --title "Vintage Story ${VS_VERSION} (Docker ${DOCKER_VERSION_NEW})" \
+  -F ./release-notes.md \
+  "$(if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then echo "--prerelease"; fi)" > ./gh-release-publish.log 2>&1
+
 step_header_string "Build Cleanup"
 execute "Pruning unused images" docker image prune -f
 execute "Removing ${LAVENDER}build.env${NC} File" rm build.env

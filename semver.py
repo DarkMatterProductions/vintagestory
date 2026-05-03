@@ -369,7 +369,7 @@ def main():
 
     # Check if dry-run mode is active
     if args.dry_run:
-        print("🔍 DRY-RUN MODE ACTIVE - No tags, releases, or artifacts will be created\n")
+        print("[DRY-RUN MODE ACTIVE] No tags, releases, or artifacts will be created\n")
 
     # Get repository name
     if args.name:
@@ -401,7 +401,6 @@ def main():
         sys.exit(1)
 
     # Step 4: Format version based on argument
-    new_version = base_version  # Initialize with a base version
     if args.dev:
         # Dev version: {new_version}.dev{distance_from_main_HEAD}+{GIT_HASH}
         distance = get_distance_from_main()
@@ -425,11 +424,21 @@ def main():
     else:
         # No argument: use standard version format {new_version}
         new_version = base_version
-        print(f"Standard version: {new_version}")
+        print(f"Standard version: {new_version}\n")
 
     # Step 5: Tag Version to Repository
-    if args.create_git_tag is True:
-        create_git_tag(new_version)
+    if new_version == base_version:
+        if args.dry_run:
+            print(f"[DRY-RUN MODE ACTIVE] No version bump detected, would have kept version at {new_version}. No git tag would have been created.\n")
+        else:
+            print(f"No version bump detected, keeping version at {new_version}. No git tag will be created.\n")
+    elif args.create_git_tag is True:
+        if args.dry_run:
+            print(f"[DRY-RUN MODE ACTIVE] Would have created and pushed git tag: {new_version}")
+        else:
+            create_git_tag(new_version)
+    else:
+        print(f"No valid Git Tag implementation detected. Git tag creation disabled.\n")
 
     # Step 5: Output version for Consumption
     if args.teamcity:
@@ -439,24 +448,22 @@ def main():
         print(f"##teamcity[setParameter name='build.version.new' value='{new_version}']")
         print(f"##teamcity[setParameter name='build.version.old' value='{current_version}']")
         print(f"##teamcit`y[setParameter name='build.gameversion' value='{vs_version}']")
-    elif args.github:
-        with open("github-output.properties", "w") as f:
-            f.write(f"""version={new_version}
-docker_version_new={new_version.replace('+', '-')}
-docker_tag={vs_version}-{new_version.replace('+', '-')}
-gameversion={vs_version}
-version_old={current_version}
-""")
     elif args.env_file:
-        with open("build.env", "w") as f:
-            f.write(f"VERSION={new_version}\n")
-            f.write(f"DOCKER_VERSION_NEW={new_version.replace('+', '-')}\n")
-            f.write(f"DOCKER_TAG={vs_version}-{new_version.replace('+', '-')}\n")
-            f.write(f"GAMEVERSION={vs_version}\n")
-            f.write(f"VERSION_OLD={current_version}\n")
+        env_var_output = f"""VERSION={new_version}
+DOCKER_VERSION_NEW={new_version.replace('+', '-')}
+DOCKER_TAG={vs_version}-{new_version.replace('+', '-')}
+GAMEVERSION={vs_version}
+VERSION_OLD={current_version}
+"""
+        if not args.dry_run:
+            with open("build.env", "w") as f:
+                f.write(env_var_output)
+        else:
+            indented_output = "\n   ".join([_env_var for _env_var in env_var_output.split('\n')])
+            print(f"[DRY-RUN MODE ACTIVE] Would have written the following to 'build.env':\n   {indented_output}")
     else:
         raise ValueError("No output format specified, you must select one of --teamcity, --github, or --env")
-    print("\n=== Versioning Complete ===")
+    print("=== Versioning Complete ===")
 
 
 if __name__ == '__main__':
