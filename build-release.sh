@@ -185,6 +185,7 @@ run_cmd(){
   local OUTPUT
   OUTPUT=$(${COMMAND} 2>&1)
   local RC=$?
+  echo "${OUTPUT}" >> ./workflow.log
   if [ "$RC" -ne 0 ]; then
     error_string "Error executing command ${MAGENTA}${COMMAND}${NC}"
     error_string "$OUTPUT"
@@ -197,9 +198,18 @@ run_cmd(){
 execute() {
   local TASK_STEP_OUTPUT="$1"
   shift 1
-  local COMMAND="$*"
-  action_string ${TASK_STEP_OUTPUT}
-  run_cmd ${COMMAND}
+  action_string "${TASK_STEP_OUTPUT}"
+  local OUTPUT
+  OUTPUT=$("$@" 2>&1)
+  local RC=$?
+  echo "${OUTPUT}" >> ./workflow.log
+  if [ "$RC" -ne 0 ]; then
+    error_string "Error executing command: $*"
+    error_string "$OUTPUT"
+    exit "$RC"
+  else
+    return "$RC"
+  fi
 }
 
 check_vars() {
@@ -212,6 +222,7 @@ check_vars() {
 }
 
 ## Script Code Starts Here
+rm ./workflow.log 2>/dev/null || true
 
 VS_VERSION_ARG=$1
 ARG_2=$2
@@ -289,18 +300,18 @@ if [ ! "$MSYSTEM" = "MINGW64" ]; then
 fi
 sub_step_header_string "Initializing Python Environment"
 execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv local "${PYTHON_VERSION}"
-execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION} -m pip install pipenv requests"
-execute "Installing Python Dependencies into Virtual Environment" "python -m pipenv install --python ${PYTHON_SHORT_VERSION} -r ./vintage_rcon_client/requirements.txt"
+execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION}" -m pip install pipenv requests
+execute "Installing Python Dependencies into Virtual Environment" "python${PYTHON_SHORT_VERSION}" -m pipenv install --python "${PYTHON_SHORT_VERSION}" -r ./vintage_rcon_client/requirements.txt
 
 sub_step_header_string "Cleaning Git Tags for Semver"
-execute "Purging Local Git Tags" "git tag -d $(git tag -l)"
-execute "Pulling Git Tags" "git fetch origin --tags"
+execute "Purging Local Git Tags" git tag -d $(git tag -l)
+execute "Pulling Git Tags" git fetch origin --tags
 action_string "Pulled (${LAVENDER}$(git --no-pager tag | wc -l)${NC}) tags from Repository."
 
 sub_step_header_string "Generating Semver Arguments"
-SEMVER_ARGS="--name vintagestory --env-file --vs-version ${VS_VERSION}"
+SEMVER_ARGS=(--name vintagestory --env-file --vs-version "${VS_VERSION}")
 
-execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS}${NC}" python ./semver.py "${SEMVER_ARGS}"
+execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS[*]}${NC}" python ./semver.py "${SEMVER_ARGS[@]}"
 action_string "Loading Build Environment Variables"
 source build.env
 
@@ -317,35 +328,34 @@ declare REPOSITORIES=(
   ralnoc/vintagestory
 )
 
-step_header_string "Vintage Story Docker Image Build"
-info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
-info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
-list_header "Docker Image Tags"
-for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
-
-list_header "Target Repositories"
-for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
-execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VERSION="${VERSION}" --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
-
-step_header_string "Publishing Images"
-execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
-for repo in "${REPOSITORIES[@]}"; do
-  action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
-  for tag in "${TAG_MATRIX[@]}";do
-    action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
-    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
-  done
-  if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
-    action_string "Processing (${LAVENDER}${VS_VERSION_STATE}${NC}) Image Tag: ${LAVENDER}latest${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag ${repo}:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:latest"
-    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
-  fi
-done
+#step_header_string "Vintage Story Docker Image Build"
+#info_string "Image Version: ${LAVENDER}${VERSION}${NC} Vintage Story Version: ${LAVENDER}${VS_VERSION}${NC}"
+#info_string "State: ${LAVENDER}${VS_VERSION_STATE}${NC} .Net Version: ${LAVENDER}${DOTNET_VERSION}${NC}"
+#list_header "Docker Image Tags"
+#for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
+#
+#list_header "Target Repositories"
+#for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
+#execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VERSION="${VERSION}" --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+#execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+#
+#step_header_string "Publishing Images"
+#execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
+#for repo in "${REPOSITORIES[@]}"; do
+#  action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
+#  for tag in "${TAG_MATRIX[@]}";do
+#    action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
+#    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
+#    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
+#  done
+#  if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
+#    action_string "Processing (${LAVENDER}${VS_VERSION_STATE}${NC}) Image Tag: ${LAVENDER}latest${NC}"
+#    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag ${repo}:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:latest"
+#    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:latest"
+#  fi
+#done
 
 step_header_string "GitHub Release"
-action_string "Creating GitHub Release for tag: ${LAVENDER}${DOCKER_TAG}${NC}"
 RELEASE_NOTES="## Vintage Story Docker Image Release
 
 **Vintage Story Version:** \`${VS_VERSION}\`
@@ -375,11 +385,15 @@ cat > ./release-notes.md <<EOF
 ${RELEASE_NOTES}
 EOF
 
-action_string "Creating GitHub Release: ${LAVENDER}${DOCKER_TAG}${NC}"
-GH_TOKEN="${GHCR_TOKEN}" gh release create "${DOCKER_TAG}" \
-  --title "Vintage Story ${VS_VERSION} (Docker ${DOCKER_VERSION_NEW})" \
+export GH_TOKEN="${GHCR_TOKEN}"
+PRERELEASE=()
+if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then
+  PRERELEASE=(--prerelease)
+fi
+execute "Creating GitHub Release: ${LAVENDER}${DOCKER_TAG}${NC}" gh release create "${DOCKER_TAG}" \
+  --title "${DOCKER_TAG}" \
   -F ./release-notes.md \
-  "$(if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then echo "--prerelease"; fi)" > ./gh-release-publish.log 2>&1
+  "${PRERELEASE[@]}"
 
 step_header_string "Build Cleanup"
 execute "Pruning unused images" docker image prune -f
