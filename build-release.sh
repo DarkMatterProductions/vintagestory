@@ -374,8 +374,7 @@ $(for repo in "${REPOSITORIES[@]}"; do echo "- \`${repo}\`"; done)"
 cat > ./release-notes.md <<EOF
 ${RELEASE_NOTES}
 EOF
-echo "${RELEASE_NOTES}"
-exit 1
+
 action_string "Creating GitHub Release: ${LAVENDER}${DOCKER_TAG}${NC}"
 GH_TOKEN="${GHCR_TOKEN}" gh release create "${DOCKER_TAG}" \
   --title "Vintage Story ${VS_VERSION} (Docker ${DOCKER_VERSION_NEW})" \
