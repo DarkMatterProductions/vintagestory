@@ -352,6 +352,19 @@ RELEASE_NOTES="## Vintage Story Docker Image Release
 **Docker Image Version:** \`${DOCKER_TAG}\`
 **Release State:** \`${VS_VERSION_STATE}\`
 
+### Included Commits
+$(git --no-pager log "${VERSION_OLD}"..HEAD --format="%x1f%h%x1e%B" | awk '
+  BEGIN { RS="\x1f" }
+  NR>1 {
+    split($0, parts, "\x1e")
+    hash = parts[1]
+    n = split(parts[2], lines, "\n")
+    for (i=1; i<=n; i++) {
+      if (lines[i] != "") { print "- " lines[i] " (" hash ")"; break }
+    }
+  }
+')
+
 ### Docker Image Tags
 $(for tag in "${TAG_MATRIX[@]}"; do echo "- \`${tag}\`"; done)
 $(if [[ "${VS_VERSION_STATE}" == "stable" ]]; then echo "- \`latest\`"; fi)
@@ -361,7 +374,8 @@ $(for repo in "${REPOSITORIES[@]}"; do echo "- \`${repo}\`"; done)"
 cat > ./release-notes.md <<EOF
 ${RELEASE_NOTES}
 EOF
-
+echo "${RELEASE_NOTES}"
+exit 1
 action_string "Creating GitHub Release: ${LAVENDER}${DOCKER_TAG}${NC}"
 GH_TOKEN="${GHCR_TOKEN}" gh release create "${DOCKER_TAG}" \
   --title "Vintage Story ${VS_VERSION} (Docker ${DOCKER_VERSION_NEW})" \
