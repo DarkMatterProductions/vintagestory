@@ -427,11 +427,8 @@ def main():
         print(f"Standard version: {new_version}\n")
 
     # Step 5: Tag Version to Repository
-    if new_version == base_version:
-        if args.dry_run:
-            print(f"[DRY-RUN MODE ACTIVE] No version bump detected, would have kept version at {new_version}. No git tag would have been created.\n")
-        else:
-            print(f"No version bump detected, keeping version at {new_version}. No git tag will be created.\n")
+    if new_version == current_version:
+        print(f"No version bump detected, keeping version at {new_version}. No git tag will be created.\n")
     elif args.create_git_tag is True:
         if args.dry_run:
             print(f"[DRY-RUN MODE ACTIVE] Would have created and pushed git tag: {new_version}")
