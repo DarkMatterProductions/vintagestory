@@ -44,6 +44,47 @@ COLORIZE_STRING() {
   printf "${OUTERCOLORRESET}%s${RESET}\n" "${EXPANDED_TEXT}"
 }
 
+COLORIZE_STRING_PENDING() {
+  local STRING_COLOR=$1
+  shift 1
+  local TEXT="$*"
+  local COLOR="${!STRING_COLOR}"
+  local RESET
+  local OUTERCOLORRESET
+  RESET=$(printf '%b' "${NC}")
+  OUTERCOLORRESET=$(printf '%b%b' "${NC}" "${COLOR}")
+
+  # First, expand the text to resolve color variables
+  local EXPANDED_TEXT
+  EXPANDED_TEXT=$(printf '%b' "${TEXT}")
+
+  # Replace ANSI reset codes with reset + action color
+  EXPANDED_TEXT="${EXPANDED_TEXT//${RESET}/${OUTERCOLORRESET}}"
+
+  printf "${OUTERCOLORRESET}%s${RESET}\r" "${EXPANDED_TEXT}"
+}
+
+COLORIZE_STRING_FINISH() {
+  local STRING_COLOR=$1
+  shift 1
+  local BUFFER=$1
+  shift 1
+  local TEXT="$*"
+  local COLOR="${!STRING_COLOR}"
+  local RESET
+  local OUTERCOLORRESET
+  RESET=$(printf '%b' "${NC}")
+  OUTERCOLORRESET=$(printf '%b%b' "${NC}" "${COLOR}")
+
+  # First, expand the text to resolve color variables
+  local EXPANDED_TEXT
+  EXPANDED_TEXT=$(printf '%b' "${TEXT}")
+
+  # Replace ANSI reset codes with reset + action color
+  EXPANDED_TEXT="${EXPANDED_TEXT//${RESET}/${OUTERCOLORRESET}}"
+  printf "${OUTERCOLORRESET}\e[${BUFFER}C%s${RESET}\n" "${EXPANDED_TEXT}"
+}
+
 COLORIZE_PADDING() {
   local STRING="$1"
   local START="${2:-21}"
@@ -180,6 +221,18 @@ warning_string() {
   COLORIZE_STRING YELLOW "$*"
 }
 
+action_string_pending() {
+  local TEXT="$*"
+  COLORIZE_STRING_PENDING CYAN "$TEXT"
+  export ACTION_CHAR_COUNT=${#TEXT}
+}
+
+action_success_string() {
+  local BUFFER="$1"
+  shift 1
+  COLORIZE_STRING_FINISH LIGHTGREEN "${BUFFER}" "$@"
+}
+
 run_cmd(){
   local COMMAND="$*"
   local OUTPUT
@@ -219,6 +272,19 @@ check_vars() {
   done
   [ -n "$var_unset" ] && exit 1
   return 0
+}
+
+ghcr_login() {
+  echo "$1" | docker --context remote-engine login ghcr.io -u "$2" --password-stdin >> ./workflow.log
+  local RC=$?
+  echo "${OUTPUT}" >> ./workflow.log
+  if [ "$RC" -ne 0 ]; then
+    error_string "Error executing command: $*"
+    error_string "$OUTPUT"
+    exit "$RC"
+  fi
+  sleep 2
+  return "${RC}"
 }
 
 ## Script Code Starts Here
@@ -292,12 +358,14 @@ else
 fi
 section_header_string "Docker Build"
 step_header_string "Environment Initialization"
+action_string_pending "Initializing pyenv environment..."
 if [ ! "$MSYSTEM" = "MINGW64" ]; then
   export PYENV_ROOT="$HOME/.pyenv"
   [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
   eval "$(pyenv init - bash)"
   eval "$(pyenv virtualenv-init -)"
 fi
+action_success_string "${ACTION_CHAR_COUNT}" "Done"
 sub_step_header_string "Initializing Python Environment"
 execute "Selecting Python ${LAVENDER}${PYTHON_VERSION}${NC}." pyenv local "${PYTHON_VERSION}"
 execute "Installing System Dependencies: ${LAVENDER}pipenv & requests${NC}." "python${PYTHON_SHORT_VERSION}" -m pip install pipenv requests
@@ -310,10 +378,11 @@ action_string "Pulled (${LAVENDER}$(git --no-pager tag | wc -l)${NC}) tags from 
 
 sub_step_header_string "Generating Semver Arguments"
 SEMVER_ARGS=(--name vintagestory --env-file --vs-version "${VS_VERSION}")
-
 execute "Generating Version with arguments: ${LAVENDER}${SEMVER_ARGS[*]}${NC}" python ./semver.py "${SEMVER_ARGS[@]}"
-action_string "Loading Build Environment Variables"
+
+action_string_pending "Loading Build Environment Variables..."
 source build.env
+action_success_string "${ACTION_CHAR_COUNT}" "Done"
 
 declare TAG_MATRIX=(
   "${DOCKER_VERSION_NEW}-python3-trixie-slim"
@@ -341,7 +410,10 @@ execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Regi
 
 step_header_string "Publishing Images"
 export GH_TOKEN="${GHCR_TOKEN}"
-execute "Logging into GHCR" bash -c echo "${GHCR_TOKEN}" | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin
+action_string_pending "Logging into GHCR..."
+ghcr_login "${GHCR_TOKEN}" "${GHCR_USERNAME}"
+action_success_string "${ACTION_CHAR_COUNT}" "Done"
+
 for repo in "${REPOSITORIES[@]}"; do
   action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
   for tag in "${TAG_MATRIX[@]}";do
