@@ -340,6 +340,7 @@ execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}
 execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
 
 step_header_string "Publishing Images"
+export GH_TOKEN="${GHCR_TOKEN}"
 execute "Logging into GHCR" bash -c echo "${GHCR_TOKEN}" | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin
 for repo in "${REPOSITORIES[@]}"; do
   action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
@@ -385,7 +386,6 @@ cat > ./release-notes.md <<EOF
 ${RELEASE_NOTES}
 EOF
 
-export GH_TOKEN="${GHCR_TOKEN}"
 PRERELEASE=()
 if [[ "${VS_VERSION_STATE}" == "unstable" ]]; then
   PRERELEASE=(--prerelease)
