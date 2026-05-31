@@ -296,8 +296,8 @@ for tag in "${TAG_MATRIX[@]}"; do list_item "${LAVENDER}${tag}${NC}"; done
 
 list_header "Target Repositories"
 for repo in "${REPOSITORIES[@]}"; do list_item "${LAVENDER}${repo}${NC}"; done
-execute "Building Container image: registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VERSION="${VERSION}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
-execute "Pushing Image to (${LAVENDER}registry.dmpsys.in/vintagestory${NC}) Registry" docker push registry.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
+execute "Building Container image: dcr.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW}" docker build --build-arg VS_VERSION_STATE="${VS_VERSION_STATE}" --build-arg VERSION="${VERSION}" --build-arg VS_VERSION="${VS_VERSION}" --build-arg DOTNET_VERSION="${DOTNET_VERSION}" -t dcr.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}" .
+execute "Pushing Image to (${LAVENDER}dcr.dmpsys.in/vintagestory${NC}) Registry" docker push dcr.dmpsys.in/vintagestory:"${VS_VERSION}-${DOCKER_VERSION_NEW}"
 
 step_header_string "Publishing Images"
 execute "Logging into GHCR" bash -c "echo ${GHCR_TOKEN} | docker --context remote-engine login ghcr.io -u ${GHCR_USERNAME} --password-stdin"
@@ -305,7 +305,7 @@ for repo in "${REPOSITORIES[@]}"; do
   action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
   for tag in "${TAG_MATRIX[@]}";do
     action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag registry.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" "docker --context remote-engine tag dcr.dmpsys.in/vintagestory:${VS_VERSION}-${DOCKER_VERSION_NEW} ${repo}:${tag}"
     execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" "docker --context remote-engine push ${repo}:${tag}"
   done
 done
