@@ -22,17 +22,21 @@ def _semantic_color_names() -> List[str]:
     existing = {
         1: "LIGHTRED",
         15: "WHITE",
-        20: "BLUE",
-        27: "LIGHTBLUE",
+        20: "DARKBLUE",
+        27: "BLUE",
+        33: "LIGHTBLUE",
         34: "GREEN",
         54: "PURPLE",
+        63: "BLUEPURPLE",
         74: "CYAN",
         82: "LIGHTGREEN",
         87: "LIGHTCYAN",
         93: "LIGHTPURPLE",
         94: "BROWN",
+        112: "LEAFGREEN",
         124: "RED",
         137: "LIGHTBROWN",
+        171: "LAVENDER",
         226: "YELLOW",
         228: "LIGHTYELLOW",
         238: "DARKGRAY",
@@ -86,15 +90,19 @@ class ScriptOutput:
     LIGHTRED = _ansi_256(1)
     GREEN = _ansi_256(34)
     LIGHTGREEN = _ansi_256(82)
+    LEAFGREEN = _ansi_256(112)
     BROWN = _ansi_256(94)
     LIGHTBROWN = _ansi_256(137)
     YELLOW = _ansi_256(226)
     LIGHTYELLOW = _ansi_256(228)
-    BLUE = _ansi_256(20)
-    LIGHTBLUE = _ansi_256(27)
+    DARKBLUE = _ansi_256(20)
+    BLUE = _ansi_256(27)
+    LIGHTBLUE = _ansi_256(33)
     CYAN = _ansi_256(74)
     LIGHTCYAN = _ansi_256(87)
+    LAVENDER = _ansi_256(171)
     PURPLE = _ansi_256(54)
+    BLUEPURPLE = _ansi_256(63)
     LIGHTPURPLE = _ansi_256(93)
     DARKGRAY = _ansi_256(238)
     LIGHTGRAY = _ansi_256(248)
@@ -258,11 +266,24 @@ class ScriptOutput:
         right_pad = "=" * right_len
         left_colored = self.colorize_padding(left_pad, 17, 21)
         right_colored = self.colorize_padding(right_pad, 21, 17)
-        return self.colorize_string("CYAN", f"{left_colored} {output_text} {right_colored}")
+        return self.colorize_string("LIGHTBLUE", f"{left_colored} {output_text} {right_colored}")
 
     def step_header(self, *parts: str) -> None:
         """Print step header."""
         self._print(self.step_header_string(*parts))
+
+    def sub_step_header_string(self, *parts: str) -> str:
+        """Sub-step header: text followed by a right-side gradient pad (max length 80)."""
+        output_text = " ".join(str(p) for p in parts)
+        text_count = len(self._strip_ansi(output_text))
+        right_len = max(0, self.MAX_HEADER_LEN - text_count - 1)
+        right_pad = "=" * right_len
+        right_colored = self.colorize_padding(right_pad, 21, 17)
+        return self.colorize_string("BLUEPURPLE", f"{output_text} {right_colored}")
+
+    def sub_step_header(self, *parts: str) -> None:
+        """Print sub-step header."""
+        self._print(self.sub_step_header_string(*parts))
 
     def step_footer_string(self) -> str:
         """Step footer with gradient padding (max length 80)."""
@@ -278,12 +299,60 @@ class ScriptOutput:
         self._print(self.step_footer_string())
 
     def action_string(self, *parts: str) -> str:
-        """Return text colored as an action (light blue)."""
-        return self.colorize_string("LIGHTBLUE", " ".join(str(p) for p in parts))
+        """Return text colored as an action (cyan)."""
+        return self.colorize_string("CYAN", " ".join(str(p) for p in parts))
 
     def action(self, *parts: str) -> None:
         """Print action message."""
         self._print(self.action_string(*parts))
+
+    def info_string(self, *parts: str) -> str:
+        """Return text colored as info (light blue)."""
+        return self.colorize_string("LIGHTBLUE", " ".join(str(p) for p in parts))
+
+    def info(self, *parts: str) -> None:
+        """Print info message."""
+        self._print(self.info_string(*parts))
+
+    def list_header_string(self, *parts: str) -> str:
+        """Return a list header (light blue), followed by a blank line."""
+        text = " ".join(str(p) for p in parts)
+        return self.colorize_string("LIGHTBLUE", f"{text}:\n")
+
+    def list_header(self, *parts: str) -> None:
+        """Print list header."""
+        self._print(self.list_header_string(*parts))
+
+    def list_item_string(self, *parts: str) -> str:
+        """Return a list item (light blue), followed by a blank line."""
+        text = " ".join(str(p) for p in parts)
+        return self.colorize_string("LIGHTBLUE", f"   -- {text}\n")
+
+    def list_item(self, *parts: str) -> None:
+        """Print list item."""
+        self._print(self.list_item_string(*parts))
+
+    def warning_string(self, *parts: str) -> str:
+        """Return text colored as a warning (yellow)."""
+        return self.colorize_string("YELLOW", " ".join(str(p) for p in parts))
+
+    def warning(self, *parts: str) -> None:
+        """Print warning message."""
+        self._print(self.warning_string(*parts))
+
+    def action_pending(self, *parts: str) -> None:
+        """Print an in-progress action (cyan) without a trailing newline, to be
+        followed by action_success() on the same line."""
+        text = " ".join(str(p) for p in parts)
+        self._pending_len = len(self._strip_ansi(text))
+        self._print(self.colorize_string("CYAN", text), end="\r")
+
+    def action_success(self, *parts: str, buffer: Optional[int] = None) -> None:
+        """Complete a pending action, printing text (light green) offset past it."""
+        if buffer is None:
+            buffer = getattr(self, "_pending_len", 0)
+        text = " ".join(str(p) for p in parts)
+        self._print(f"\033[{buffer}C{self.colorize_string('LIGHTGREEN', text)}")
 
     def error_string(self, *parts: str) -> str:
         """Return text colored as error (light red)."""
@@ -362,9 +431,17 @@ def _main() -> None:
     # Section and step headers/footers
     out.section_header("Demo Section")
     out.step_header("Step 1: Colored messages")
-    out.action("Action message (light blue)")
+    out.action("Action message (cyan)")
     out._print(out.action_string("action_string() returns styled text"))
     out._print(out.error_string("error_string() for error-style text (no stderr)"))
+    out.sub_step_header("Sub-step header (blue-purple)")
+    out.info("Info message (light blue)")
+    out.list_header("List header")
+    out.list_item("List item one")
+    out.list_item("List item two")
+    out.warning("Warning message (yellow)")
+    out.action_pending("Pending action...")
+    out.action_success("Done")
 
     out.step_header("Step 2: run_cmd (list, no shell)")
     out.run_cmd([sys.executable, "-c", "print('Hello from subprocess')"])
