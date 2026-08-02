@@ -165,7 +165,7 @@ def run(
     for repo in settings.repositories:
         out.list_item(f"{out.LAVENDER}{repo}{out.NC}")
 
-    base_repository = f"{settings.registry_host}/{settings.image_name}"
+    base_repository = f"{settings.image_name}"
     base_tag = f"{vs_info.vs_version}-{build_version.docker_version_new}"
     build_args = {
         "VERSION": build_version.version,
@@ -178,9 +178,6 @@ def run(
     out.action(f"Building Container image: {base_repository}:{base_tag}")
     if not out.dry_run:
         docker_ops.build_image(out, local_client, f"{base_repository}:{base_tag}", build_args)
-    out.action(f"Pushing Image to ({out.LAVENDER}{base_repository}{out.NC}) Registry")
-    if not out.dry_run:
-        docker_ops.push_image(out, local_client, base_repository, base_tag)
 
     out.step_header("Publishing Images")
     remote_client = docker_ops.get_client(settings.docker_context)
@@ -189,25 +186,25 @@ def run(
     for repo in settings.repositories:
         registry = docker_ops.registry_for_repository(repo)
         if registry not in logged_in_registries:
-            username, token = settings.registry_credentials.get(registry, ("", ""))
-            if not username or not token:
+            __registy_ref = settings.registry_credentials.get(registry, {})
+            username, token = __registy_ref.get("credentials", ("", ""))
+            _auth_enabled = __registy_ref.get("authenticated", False)
+            if _auth_enabled and not username or not token:
                 raise RuntimeError(f"No credentials configured for registry {registry!r} (required to publish {repo})")
-            out.action(f"Logging into {out.LAVENDER}{registry}{out.NC}")
-            if not out.dry_run:
+            if not out.dry_run and _auth_enabled:
+                out.action(f"Logging into {out.LAVENDER}{registry}{out.NC}")
                 docker_ops.login(remote_client, registry, username, token)
             logged_in_registries.add(registry)
 
         out.action(f"Processing Image for Repository: {out.LAVENDER}{repo}{out.NC}")
         for tag in tag_matrix:
-            out.action(f"Processing Image Tag: {out.LAVENDER}{tag}{out.NC}")
-            out.action(f"  Tagging Image: {out.LAVENDER}{repo}:{tag}{out.NC}")
+            out.action(f"  Applying Image Tag: {out.LAVENDER}{tag}{out.NC}")
             out.action(f"  Pushing Image to Repository: {out.LAVENDER}{repo}{out.NC}")
             if not out.dry_run:
                 docker_ops.tag_image(remote_client, f"{base_repository}:{base_tag}", repo, tag)
                 docker_ops.push_image(out, remote_client, repo, tag)
         if publish_release and vs_info.vs_version_state == "stable":
-            out.action(f"Processing ({out.LAVENDER}{vs_info.vs_version_state}{out.NC}) Image Tag: {out.LAVENDER}latest{out.NC}")
-            out.action(f"  Tagging Image: {out.LAVENDER}{repo}:latest{out.NC}")
+            out.action(f"  Applying ({out.LAVENDER}{vs_info.vs_version_state}{out.NC}) Image Tag: {out.LAVENDER}latest{out.NC}")
             out.action(f"  Pushing Image to Repository: {out.LAVENDER}{repo}{out.NC}")
             if not out.dry_run:
                 docker_ops.tag_image(remote_client, f"{repo}:{build_version.docker_tag}", repo, "latest")

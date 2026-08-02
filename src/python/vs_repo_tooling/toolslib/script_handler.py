@@ -321,7 +321,7 @@ class ScriptOutput:
     def list_header_string(self, *parts: str) -> str:
         """Return a list header (light blue), followed by a blank line."""
         text = " ".join(str(p) for p in parts)
-        return self.colorize_string("LIGHTBLUE", f"{text}:\n")
+        return self.colorize_string("LIGHTBLUE", f"{text}:")
 
     def list_header(self, *parts: str) -> None:
         """Print list header."""
@@ -330,7 +330,7 @@ class ScriptOutput:
     def list_item_string(self, *parts: str) -> str:
         """Return a list item (light blue), followed by a blank line."""
         text = " ".join(str(p) for p in parts)
-        return self.colorize_string("LIGHTBLUE", f"   -- {text}\n")
+        return self.colorize_string("LIGHTBLUE", f"   -- {text}")
 
     def list_item(self, *parts: str) -> None:
         """Print list item."""
