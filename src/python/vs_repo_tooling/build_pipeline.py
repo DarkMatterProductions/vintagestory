@@ -102,7 +102,7 @@ def _determine_build_version(
 
     if new_version != current_version and create_git_tag:
         if out.dry_run:
-            out.warning(f"[DRY-RUN MODE ACTIVE] Would have created and pushed git tag: {new_version}")
+            out.action(f"Creating and pushing git tag: {new_version}")
         else:
             core.create_git_tag(new_version, out=out)
 
@@ -138,7 +138,7 @@ def run(
     *,
     publish_release: bool,
 ) -> None:
-    out.section_header("Container Build" if publish_release else "Docker Build")
+    out.section_header("Container Build")
     out.step_header("Environment Initialization")
 
     vs_info = resolve_vs_version(settings, vs_version_arg, state_arg)
@@ -176,14 +176,10 @@ def run(
 
     local_client = docker_ops.get_client()
     out.action(f"Building Container image: {base_repository}:{base_tag}")
-    if out.dry_run:
-        out.warning(f"[DRY-RUN MODE ACTIVE] Would have built image: {base_repository}:{base_tag}")
-    else:
+    if not out.dry_run:
         docker_ops.build_image(out, local_client, f"{base_repository}:{base_tag}", build_args)
     out.action(f"Pushing Image to ({out.LAVENDER}{base_repository}{out.NC}) Registry")
-    if out.dry_run:
-        out.warning(f"[DRY-RUN MODE ACTIVE] Would have pushed image: {base_repository}:{base_tag}")
-    else:
+    if not out.dry_run:
         docker_ops.push_image(out, local_client, base_repository, base_tag)
 
     out.step_header("Publishing Images")
@@ -197,9 +193,7 @@ def run(
             if not username or not token:
                 raise RuntimeError(f"No credentials configured for registry {registry!r} (required to publish {repo})")
             out.action(f"Logging into {out.LAVENDER}{registry}{out.NC}")
-            if out.dry_run:
-                out.warning(f"[DRY-RUN MODE ACTIVE] Would have logged into: {registry}")
-            else:
+            if not out.dry_run:
                 docker_ops.login(remote_client, registry, username, token)
             logged_in_registries.add(registry)
 
@@ -208,18 +202,14 @@ def run(
             out.action(f"Processing Image Tag: {out.LAVENDER}{tag}{out.NC}")
             out.action(f"  Tagging Image: {out.LAVENDER}{repo}:{tag}{out.NC}")
             out.action(f"  Pushing Image to Repository: {out.LAVENDER}{repo}{out.NC}")
-            if out.dry_run:
-                out.warning(f"[DRY-RUN MODE ACTIVE] Would have tagged and pushed: {repo}:{tag}")
-            else:
+            if not out.dry_run:
                 docker_ops.tag_image(remote_client, f"{base_repository}:{base_tag}", repo, tag)
                 docker_ops.push_image(out, remote_client, repo, tag)
         if publish_release and vs_info.vs_version_state == "stable":
             out.action(f"Processing ({out.LAVENDER}{vs_info.vs_version_state}{out.NC}) Image Tag: {out.LAVENDER}latest{out.NC}")
             out.action(f"  Tagging Image: {out.LAVENDER}{repo}:latest{out.NC}")
             out.action(f"  Pushing Image to Repository: {out.LAVENDER}{repo}{out.NC}")
-            if out.dry_run:
-                out.warning(f"[DRY-RUN MODE ACTIVE] Would have tagged and pushed: {repo}:latest")
-            else:
+            if not out.dry_run:
                 docker_ops.tag_image(remote_client, f"{repo}:{build_version.docker_tag}", repo, "latest")
                 docker_ops.push_image(out, remote_client, repo, "latest")
 
@@ -233,9 +223,8 @@ def run(
             tag_matrix=tag_matrix,
             repositories=settings.repositories,
         )
-        if out.dry_run:
-            out.warning("[DRY-RUN MODE ACTIVE] Would have written release-notes.md")
-        else:
+        out.action(f"Writing release notes to release-notes.md")
+        if not out.dry_run:
             Path("release-notes.md").write_text(notes)
         token = settings.ghcr_token or os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN")
         if not token:
@@ -244,9 +233,7 @@ def run(
         if not repo_slug:
             raise RuntimeError("Could not determine owner/repo from the origin remote")
         out.action(f"Creating GitHub Release: {out.LAVENDER}{build_version.docker_tag}{out.NC}")
-        if out.dry_run:
-            out.warning(f"[DRY-RUN MODE ACTIVE] Would have created GitHub release: {build_version.docker_tag}")
-        else:
+        if not out.dry_run:
             github_release.create_release(
                 token=token,
                 repo_slug=repo_slug,
@@ -257,10 +244,8 @@ def run(
             )
 
     out.step_header("Build Cleanup")
-    out.action("Pruning unused images")
-    if out.dry_run:
-        out.warning("[DRY-RUN MODE ACTIVE] Would have pruned unused images")
-    else:
+    out.action(f"Pruning unused images")
+    if not out.dry_run:
         docker_ops.prune_images(local_client)
     out.step_footer()
     out.section_footer()

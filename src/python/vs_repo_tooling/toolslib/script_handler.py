@@ -118,10 +118,14 @@ class ScriptOutput:
     _ANSI_STRIP = re.compile(r"\033\[[0-9;]*m")
     MAX_HEADER_LEN = 80
 
-    def __init__(self, stream=None, dry_run: bool = False):
+    def __init__(self, stream=None, dry_run: bool = False, debug: bool = False):
         """Optional stream for print (default: sys.stdout)."""
         self._stream = stream if stream is not None else sys.stdout
         self.dry_run = dry_run
+        self.debug = debug
+
+    def __dry_run_notification(self) -> str:
+        return f"\n{self.YELLOW}[DRY-RUN]{self.NC} No changes will be made during this run" if self.dry_run else ""
 
     def _print(self, text: str, end: str = "\n") -> None:
         """Write text to the configured stream."""
@@ -266,7 +270,7 @@ class ScriptOutput:
         right_pad = "=" * right_len
         left_colored = self.colorize_padding(left_pad, 17, 21)
         right_colored = self.colorize_padding(right_pad, 21, 17)
-        return self.colorize_string("LIGHTBLUE", f"{left_colored} {output_text} {right_colored}")
+        return self.colorize_string("LIGHTBLUE", f"{left_colored} {output_text} {right_colored}{self.__dry_run_notification()}")
 
     def step_header(self, *parts: str) -> None:
         """Print step header."""
@@ -390,8 +394,8 @@ class ScriptOutput:
             cmd_for_display = " ".join(command) if isinstance(command, (list, tuple)) else str(command)
 
         try:
-            if self.dry_run:
-                self.action(f"Dry run: would execute command {self.LIGHTPURPLE}{cmd_for_display}{self.NC}")
+            if self.dry_run and self.debug:
+                self.action(f"{self.__dry_run_notification()} Would execute command {self.LIGHTPURPLE}{cmd_for_display}{self.NC}")
                 return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
             result = subprocess.run(
                 command,
