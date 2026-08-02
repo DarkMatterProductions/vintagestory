@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vs-repo-tooling"
+version = "0.1.0"
+description = "Versioning, build, and publish pipeline for the Vintage Story Docker image"
+requires-python = ">=3.11"
+dependencies = [
+    "docker",
+    "PyGithub",
+    "pydantic-settings",
+    "requests",
+]
+
+[project.scripts]
+vs-build-dev = "vs_repo_tooling.entrypoints.build_dev:main"
+vs-build-release = "vs_repo_tooling.entrypoints.build_release:main"
+vs-semver = "vs_repo_tooling.versioning.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["vs_repo_tooling*"]
