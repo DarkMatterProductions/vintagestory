@@ -821,3 +821,9 @@ Publishing steps (release builds only) require the following to be set in the en
 The publish step also requires a Docker context named `remote-engine` to be configured
 locally (`docker context create remote-engine ...`) -- this is the remote Docker engine
 that images are tagged and pushed from.
+
+**Note on Docker Hub (`ralnoc/vintagestory`)**: the pipeline only logs in to `ghcr.io`
+explicitly (via `GHCR_TOKEN`/`GHCR_USERNAME`). There is no separate Docker Hub credential
+configuration -- pushing to `ralnoc/vintagestory` relies on the `remote-engine` Docker
+context already being authenticated to Docker Hub (e.g. via a `docker login` run once
+against that engine). This matches the behavior of the original `build-release.sh` script.
