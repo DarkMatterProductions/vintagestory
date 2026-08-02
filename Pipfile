@@ -1,0 +1,30 @@
+[[source]]
+url = "https://grubhub.jfrog.io/artifactory/api/pypi/pypi/simple"
+verify_ssl = true
+name = "pip_conf_index_global"
+
+[packages]
+fastapi = "*"
+python-socketio = "*"
+aiohttp = "*"
+pyyaml = "*"
+rcon = "*"
+authlib = "*"
+httpx = "*"
+requests = "*"
+aiofiles = "*"
+jinja2 = "*"
+itsdangerous = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+python-engineio = {extras = ["asyncio"], version = "*"}
+python-jose = {extras = ["cryptography"], version = "*"}
+passlib = {extras = ["bcrypt"], version = "*"}
+docker = "*"
+PyGithub = "*"
+pydantic-settings = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
+python_full_version = "3.11.9"

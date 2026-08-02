@@ -31,6 +31,7 @@
 - [Configuration Options](#configuration-options)
 - [Docker Compose Examples](#docker-compose-examples)
 - [Building the Image](#building-the-image)
+- [Build Release](#build-release)
 
 ---
 
@@ -755,3 +756,68 @@ docker build \
 |------------------|-------------------------------------|--------------|
 | `VS_VERSION`     | Version of Vintage Story to install | _(required)_ |
 | `DOTNET_VERSION` | Version of .NET SDK to use          | `8.0`        |
+
+---
+
+## Build Release
+
+The image versioning, build, and publish pipeline used for dev builds and tagged releases
+is implemented in Python under `src/python/vs_repo_tooling/`, replacing the old
+`build-dev.sh`/`build-release.sh` Bash scripts. It resolves the Vintage Story version,
+computes a semantic version from conventional commits, builds the Docker image, and
+(for releases) publishes it to the configured registries and cuts a GitHub release.
+
+### Prerequisites
+
+Bootstrap the pyenv/pipenv environment once per machine:
+
+```bash
+./setup-dev-env.sh
+pipenv shell
+```
+
+This installs the pinned Python version and the project's dependencies (`docker`,
+`PyGithub`, `pydantic-settings`, etc.) via `Pipfile`.
+
+### Running a Dev Build
+
+A dev build resolves the version, builds the image locally, and pushes it to the internal
+registry only -- it does not create a git tag, publish to GHCR/Docker Hub, or cut a GitHub
+release:
+
+```bash
+python -m vs_repo_tooling.entrypoints.build_dev --vs-version stable
+```
+
+### Running a Release Build
+
+A release build additionally creates a git tag, publishes the image to every configured
+repository (GHCR and Docker Hub), tags `latest` for stable releases, and creates a GitHub
+release with generated release notes:
+
+```bash
+python -m vs_repo_tooling.entrypoints.build_release --vs-version stable
+```
+
+### CLI Arguments
+
+Both entrypoints accept the same arguments:
+
+| Argument              | Required | Values                              | Description                                                                    |
+|-----------------------|----------|--------------------------------------|----------------------------------------------------------------------------------|
+| `--vs-version`        | Yes      | `stable`, `unstable`, or a literal version (e.g. `1.22.5`) | Vintage Story version to build. `stable`/`unstable` are resolved against the official version API; any other value is used verbatim. |
+| `--vs-version-state`  | No       | `stable`, `unstable`                | Overrides the resolved release state, which drives the `latest` tag (release builds only) and the GitHub prerelease flag. |
+
+### Required Environment Variables
+
+Publishing steps (release builds only) require the following to be set in the environment:
+
+| Variable                    | Purpose                                                                |
+|------------------------------|-------------------------------------------------------------------------|
+| `GHCR_TOKEN`                 | Token used to authenticate to GHCR and to create the GitHub release    |
+| `GHCR_USERNAME`               | Username used to authenticate to GHCR                                  |
+| `GH_TOKEN` / `GITHUB_TOKEN`  | Fallback token for the GitHub release step if `GHCR_TOKEN` is unset    |
+
+The publish step also requires a Docker context named `remote-engine` to be configured
+locally (`docker context create remote-engine ...`) -- this is the remote Docker engine
+that images are tagged and pushed from.

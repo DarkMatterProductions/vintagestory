@@ -1,4 +1,5 @@
 """Shared orchestration for the dev and release Docker build pipelines."""
+import argparse
 import os
 import re
 from dataclasses import dataclass
@@ -28,17 +29,26 @@ class BuildVersion:
     docker_tag: str
 
 
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Resolve the Vintage Story version to build")
+    parser.add_argument(
+        "--vs-version",
+        required=True,
+        help="Vintage Story version to build for: 'stable', 'unstable', or a literal version string (e.g. 1.22.5)",
+    )
+    parser.add_argument(
+        "--vs-version-state",
+        choices=["stable", "unstable"],
+        default=None,
+        help="Override the release state (drives the 'latest' tag and GitHub prerelease flag)",
+    )
+    return parser
+
+
 def parse_cli_args(argv: Optional[Sequence[str]]) -> Tuple[str, Optional[str]]:
-    """Parse (VS_VERSION_ARG, ARG_2) from CLI args."""
-    args = list(argv) if argv is not None else []
-    if not args:
-        raise ValueError(
-            "Argument required. Syntax: <script> [stable|unstable]\n"
-            "                            <script> <VS-version> <state-metadata[stable|unstable]>"
-        )
-    vs_version_arg = args[0]
-    state_arg = args[1] if len(args) > 1 else None
-    return vs_version_arg, state_arg
+    """Parse --vs-version/--vs-version-state from CLI args."""
+    args = build_arg_parser().parse_args(argv)
+    return args.vs_version, args.vs_version_state
 
 
 def resolve_vs_version(
