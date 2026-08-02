@@ -1,5 +1,5 @@
 """Pydantic-settings models for the Vintage Story Docker build pipeline."""
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,10 +21,21 @@ class DevBuildSettings(BaseSettings):
     docker_context: str = "remote-engine"
     dotnet_version_by_vs: Dict[str, str] = dict(DOTNET_VERSION_BY_VS)
     repositories: List[str] = []
-    # Unprefixed: these mirror the GHCR_TOKEN/GHCR_USERNAME env vars the bash
-    # scripts already relied on, set externally by CI (not VS_BUILD_-namespaced).
+    # Unprefixed: these mirror the GHCR_TOKEN/GHCR_USERNAME/DOCKERHUB_TOKEN/
+    # DOCKERHUB_USERNAME env vars the bash scripts already relied on, set
+    # externally by CI (not VS_BUILD_-namespaced).
     ghcr_token: str = Field(default="", validation_alias="GHCR_TOKEN")
     ghcr_username: str = Field(default="", validation_alias="GHCR_USERNAME")
+    dockerhub_token: str = Field(default="", validation_alias="DOCKERHUB_TOKEN")
+    dockerhub_username: str = Field(default="", validation_alias="DOCKERHUB_USERNAME")
+
+    @property
+    def registry_credentials(self) -> Dict[str, Tuple[str, str]]:
+        """Maps a registry host to its (username, token) login credentials."""
+        return {
+            "ghcr.io": (self.ghcr_username, self.ghcr_token),
+            "docker.io": (self.dockerhub_username, self.dockerhub_token),
+        }
 
 
 class ReleaseBuildSettings(DevBuildSettings):

@@ -59,6 +59,16 @@ def login(client: docker.DockerClient, registry: str, username: str, password: s
     return client.login(username=username, password=password, registry=registry)
 
 
+def registry_for_repository(repository: str) -> str:
+    """Resolve the registry host a repository lives on, mirroring Docker's own
+    resolution rules: the leading path segment is an explicit registry host if
+    it contains a '.' or ':' or is 'localhost'; otherwise it's Docker Hub."""
+    first_segment = repository.split("/", 1)[0]
+    if "." in first_segment or ":" in first_segment or first_segment == "localhost":
+        return first_segment
+    return "docker.io"
+
+
 def prune_images(client: docker.DockerClient) -> dict:
     """Remove unused (dangling) images."""
     return client.images.prune()

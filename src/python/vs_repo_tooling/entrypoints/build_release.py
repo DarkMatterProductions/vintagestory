@@ -11,7 +11,8 @@ from vs_repo_tooling.toolslib.script_handler import ScriptOutput
 def main(argv=None) -> None:
     out = ScriptOutput()
     try:
-        vs_version_arg, state_arg = build_pipeline.parse_cli_args(argv if argv is not None else sys.argv[1:])
+        vs_version_arg, state_arg, dry_run = build_pipeline.parse_cli_args(argv if argv is not None else sys.argv[1:])
+        out.dry_run = dry_run
         settings = ReleaseBuildSettings()
         build_pipeline.run(out, settings, vs_version_arg, state_arg, publish_release=True)
     except SystemExit:

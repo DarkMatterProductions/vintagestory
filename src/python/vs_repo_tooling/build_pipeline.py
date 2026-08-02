@@ -34,7 +34,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--vs-version",
         required=True,
-        help="Vintage Story version to build for: 'stable', 'unstable', or a literal version string (e.g. 1.22.5)",
+        help="Literal Vintage Story version to build for (e.g. 1.22.5)",
     )
     parser.add_argument(
         "--vs-version-state",
@@ -42,41 +42,35 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Override the release state (drives the 'latest' tag and GitHub prerelease flag)",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Enable Dry run mode.",
+    )
     return parser
 
 
-def parse_cli_args(argv: Optional[Sequence[str]]) -> Tuple[str, Optional[str]]:
-    """Parse --vs-version/--vs-version-state from CLI args."""
+def parse_cli_args(argv: Optional[Sequence[str]]) -> Tuple[str, Optional[str], bool]:
+    """Parse --vs-version/--vs-version-state/--dry-run from CLI args."""
     args = build_arg_parser().parse_args(argv)
-    return args.vs_version, args.vs_version_state
+    return args.vs_version, args.vs_version_state, args.dry_run
 
 
 def resolve_vs_version(
-    out: ScriptOutput,
     settings: DevBuildSettings,
     vs_version_arg: str,
     state_arg: Optional[str],
 ) -> VsVersionInfo:
-    """Resolve the Vintage Story + .NET version. `stable`/`unstable` fetch from the
-    official API; any other value is parsed directly as a literal version string."""
+    """Resolve the Vintage Story + .NET version from a literal version string."""
     vs_version_state = ""
-    if vs_version_arg == "stable":
-        identified_version = core.get_api_version(stable=True, out=out)
-        vs_version_state = "stable"
-    elif vs_version_arg == "unstable":
-        identified_version = core.get_api_version(stable=False, out=out)
-        vs_version_state = "unstable"
-    else:
-        identified_version = vs_version_arg
-
     if state_arg == "stable":
         vs_version_state = "stable"
     elif state_arg == "unstable":
         vs_version_state = "unstable"
 
-    match = _VS_VERSION_PATTERN.match(identified_version)
+    match = _VS_VERSION_PATTERN.match(vs_version_arg)
     if not match:
-        raise ValueError(f"Could not parse Vintage Story version from: {identified_version!r}")
+        raise ValueError(f"Could not parse Vintage Story version from: {vs_version_arg!r}")
     major, minor, build, devhash = match.groups()
     vs_version = f"{major}.{minor}.{build}{devhash}"
 
@@ -147,7 +141,7 @@ def run(
     out.section_header("Container Build" if publish_release else "Docker Build")
     out.step_header("Environment Initialization")
 
-    vs_info = resolve_vs_version(out, settings, vs_version_arg, state_arg)
+    vs_info = resolve_vs_version(settings, vs_version_arg, state_arg)
 
     out.sub_step_header("Cleaning Git Tags for Semver")
     git_ops.refresh_tags(out)
@@ -182,29 +176,52 @@ def run(
 
     local_client = docker_ops.get_client()
     out.action(f"Building Container image: {base_repository}:{base_tag}")
-    docker_ops.build_image(out, local_client, f"{base_repository}:{base_tag}", build_args)
+    if out.dry_run:
+        out.warning(f"[DRY-RUN MODE ACTIVE] Would have built image: {base_repository}:{base_tag}")
+    else:
+        docker_ops.build_image(out, local_client, f"{base_repository}:{base_tag}", build_args)
     out.action(f"Pushing Image to ({out.LAVENDER}{base_repository}{out.NC}) Registry")
-    docker_ops.push_image(out, local_client, base_repository, base_tag)
+    if out.dry_run:
+        out.warning(f"[DRY-RUN MODE ACTIVE] Would have pushed image: {base_repository}:{base_tag}")
+    else:
+        docker_ops.push_image(out, local_client, base_repository, base_tag)
 
     out.step_header("Publishing Images")
     remote_client = docker_ops.get_client(settings.docker_context)
-    out.action("Logging into GHCR")
-    docker_ops.login(remote_client, "ghcr.io", settings.ghcr_username, settings.ghcr_token)
 
+    logged_in_registries = set()
     for repo in settings.repositories:
+        registry = docker_ops.registry_for_repository(repo)
+        if registry not in logged_in_registries:
+            username, token = settings.registry_credentials.get(registry, ("", ""))
+            if not username or not token:
+                raise RuntimeError(f"No credentials configured for registry {registry!r} (required to publish {repo})")
+            out.action(f"Logging into {out.LAVENDER}{registry}{out.NC}")
+            if out.dry_run:
+                out.warning(f"[DRY-RUN MODE ACTIVE] Would have logged into: {registry}")
+            else:
+                docker_ops.login(remote_client, registry, username, token)
+            logged_in_registries.add(registry)
+
         out.action(f"Processing Image for Repository: {out.LAVENDER}{repo}{out.NC}")
         for tag in tag_matrix:
             out.action(f"Processing Image Tag: {out.LAVENDER}{tag}{out.NC}")
             out.action(f"  Tagging Image: {out.LAVENDER}{repo}:{tag}{out.NC}")
-            docker_ops.tag_image(remote_client, f"{base_repository}:{base_tag}", repo, tag)
             out.action(f"  Pushing Image to Repository: {out.LAVENDER}{repo}{out.NC}")
-            docker_ops.push_image(out, remote_client, repo, tag)
+            if out.dry_run:
+                out.warning(f"[DRY-RUN MODE ACTIVE] Would have tagged and pushed: {repo}:{tag}")
+            else:
+                docker_ops.tag_image(remote_client, f"{base_repository}:{base_tag}", repo, tag)
+                docker_ops.push_image(out, remote_client, repo, tag)
         if publish_release and vs_info.vs_version_state == "stable":
             out.action(f"Processing ({out.LAVENDER}{vs_info.vs_version_state}{out.NC}) Image Tag: {out.LAVENDER}latest{out.NC}")
             out.action(f"  Tagging Image: {out.LAVENDER}{repo}:latest{out.NC}")
-            docker_ops.tag_image(remote_client, f"{repo}:{build_version.docker_tag}", repo, "latest")
             out.action(f"  Pushing Image to Repository: {out.LAVENDER}{repo}{out.NC}")
-            docker_ops.push_image(out, remote_client, repo, "latest")
+            if out.dry_run:
+                out.warning(f"[DRY-RUN MODE ACTIVE] Would have tagged and pushed: {repo}:latest")
+            else:
+                docker_ops.tag_image(remote_client, f"{repo}:{build_version.docker_tag}", repo, "latest")
+                docker_ops.push_image(out, remote_client, repo, "latest")
 
     if publish_release:
         out.step_header("GitHub Release")
@@ -216,7 +233,10 @@ def run(
             tag_matrix=tag_matrix,
             repositories=settings.repositories,
         )
-        Path("release-notes.md").write_text(notes)
+        if out.dry_run:
+            out.warning("[DRY-RUN MODE ACTIVE] Would have written release-notes.md")
+        else:
+            Path("release-notes.md").write_text(notes)
         token = settings.ghcr_token or os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN")
         if not token:
             raise RuntimeError("GHCR_TOKEN (or GH_TOKEN/GITHUB_TOKEN) must be set to create a GitHub release")
@@ -224,17 +244,23 @@ def run(
         if not repo_slug:
             raise RuntimeError("Could not determine owner/repo from the origin remote")
         out.action(f"Creating GitHub Release: {out.LAVENDER}{build_version.docker_tag}{out.NC}")
-        github_release.create_release(
-            token=token,
-            repo_slug=repo_slug,
-            tag=build_version.docker_tag,
-            title=build_version.docker_tag,
-            notes=notes,
-            prerelease=(vs_info.vs_version_state == "unstable"),
-        )
+        if out.dry_run:
+            out.warning(f"[DRY-RUN MODE ACTIVE] Would have created GitHub release: {build_version.docker_tag}")
+        else:
+            github_release.create_release(
+                token=token,
+                repo_slug=repo_slug,
+                tag=build_version.docker_tag,
+                title=build_version.docker_tag,
+                notes=notes,
+                prerelease=(vs_info.vs_version_state == "unstable"),
+            )
 
     out.step_header("Build Cleanup")
     out.action("Pruning unused images")
-    docker_ops.prune_images(local_client)
+    if out.dry_run:
+        out.warning("[DRY-RUN MODE ACTIVE] Would have pruned unused images")
+    else:
+        docker_ops.prune_images(local_client)
     out.step_footer()
     out.section_footer()

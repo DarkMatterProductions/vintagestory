@@ -781,22 +781,22 @@ This installs the pinned Python version and the project's dependencies (`docker`
 
 ### Running a Dev Build
 
-A dev build resolves the version, builds the image locally, and pushes it to the internal
+A dev build builds the image locally for the given version and pushes it to the internal
 registry only -- it does not create a git tag, publish to GHCR/Docker Hub, or cut a GitHub
 release:
 
 ```bash
-python -m vs_repo_tooling.entrypoints.build_dev --vs-version stable
+python -m vs_repo_tooling.entrypoints.build_dev --vs-version 1.22.5
 ```
 
 ### Running a Release Build
 
 A release build additionally creates a git tag, publishes the image to every configured
-repository (GHCR and Docker Hub), tags `latest` for stable releases, and creates a GitHub
-release with generated release notes:
+repository (GHCR and Docker Hub), tags `latest` when `--vs-version-state stable` is
+passed, and creates a GitHub release with generated release notes:
 
 ```bash
-python -m vs_repo_tooling.entrypoints.build_release --vs-version stable
+python -m vs_repo_tooling.entrypoints.build_release --vs-version 1.22.5 --vs-version-state stable
 ```
 
 ### CLI Arguments
@@ -805,25 +805,28 @@ Both entrypoints accept the same arguments:
 
 | Argument              | Required | Values                              | Description                                                                    |
 |-----------------------|----------|--------------------------------------|----------------------------------------------------------------------------------|
-| `--vs-version`        | Yes      | `stable`, `unstable`, or a literal version (e.g. `1.22.5`) | Vintage Story version to build. `stable`/`unstable` are resolved against the official version API; any other value is used verbatim. |
-| `--vs-version-state`  | No       | `stable`, `unstable`                | Overrides the resolved release state, which drives the `latest` tag (release builds only) and the GitHub prerelease flag. |
+| `--vs-version`        | Yes      | A literal version (e.g. `1.22.5`)   | Vintage Story version to build, used as-is -- no version is fetched from an API. |
+| `--vs-version-state`  | No       | `stable`, `unstable`                | Release state, which drives the `latest` tag (release builds only) and the GitHub prerelease flag. Omit to skip both. |
+| `--dry-run`           | No       | flag                                 | Runs through every build section and logs what would happen, without building/pushing/tagging images, logging into a registry, creating a git tag, writing `release-notes.md`, or creating a GitHub release. |
 
 ### Required Environment Variables
 
 Publishing steps (release builds only) require the following to be set in the environment:
 
-| Variable                    | Purpose                                                                |
-|------------------------------|-------------------------------------------------------------------------|
-| `GHCR_TOKEN`                 | Token used to authenticate to GHCR and to create the GitHub release    |
-| `GHCR_USERNAME`               | Username used to authenticate to GHCR                                  |
-| `GH_TOKEN` / `GITHUB_TOKEN`  | Fallback token for the GitHub release step if `GHCR_TOKEN` is unset    |
+| Variable              | Purpose                                                              |
+|-----------------------|-----------------------------------------------------------------------|
+| `GHCR_TOKEN`          | Token used to authenticate to GHCR and to create the GitHub release  |
+| `GHCR_USERNAME`       | Username used to authenticate to GHCR                                |
+| `DOCKERHUB_TOKEN`     | Token used to authenticate to Docker Hub                             |
+| `DOCKERHUB_USERNAME`  | Username used to authenticate to Docker Hub                          |
+| `GH_TOKEN` / `GITHUB_TOKEN` | Fallback token for the GitHub release step if `GHCR_TOKEN` is unset |
 
 The publish step also requires a Docker context named `remote-engine` to be configured
 locally (`docker context create remote-engine ...`) -- this is the remote Docker engine
 that images are tagged and pushed from.
 
-**Note on Docker Hub (`ralnoc/vintagestory`)**: the pipeline only logs in to `ghcr.io`
-explicitly (via `GHCR_TOKEN`/`GHCR_USERNAME`). There is no separate Docker Hub credential
-configuration -- pushing to `ralnoc/vintagestory` relies on the `remote-engine` Docker
-context already being authenticated to Docker Hub (e.g. via a `docker login` run once
-against that engine). This matches the behavior of the original `build-release.sh` script.
+The pipeline logs into a registry automatically the first time it needs to push to it,
+resolved from each configured repository's host (e.g. `ghcr.io/...` logs into GHCR,
+`ralnoc/vintagestory` has no host prefix and resolves to Docker Hub). If credentials
+aren't configured for a registry a target repository requires, the build fails fast with
+an error naming the missing registry.
