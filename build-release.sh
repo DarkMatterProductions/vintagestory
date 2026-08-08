@@ -418,13 +418,13 @@ for repo in "${REPOSITORIES[@]}"; do
   action_string "Processing Image for Repository: ${LAVENDER}${repo}${NC}"
   for tag in "${TAG_MATRIX[@]}";do
     action_string "Processing Image Tag: ${LAVENDER}${tag}${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" docker --context remote-engine tag dcr.dmpsys.in/vintagestory:"${VS_VERSION}"-"${DOCKER_VERSION_NEW}" "${repo}":"${tag}"
-    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" docker --context remote-engine push "${repo}":"${tag}"
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" docker tag dcr.dmpsys.in/vintagestory:"${VS_VERSION}"-"${DOCKER_VERSION_NEW}" "${repo}":"${tag}"
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" docker push "${repo}":"${tag}"
   done
   if [[ "${VS_VERSION_STATE}" == "stable" ]]; then
     action_string "Processing (${LAVENDER}${VS_VERSION_STATE}${NC}) Image Tag: ${LAVENDER}latest${NC}"
-    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" docker --context remote-engine tag "${repo}":"${VS_VERSION}"-"${DOCKER_VERSION_NEW}" "${repo}":latest
-    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" docker --context remote-engine push "${repo}":latest
+    execute "  Tagging Image: ${LAVENDER}${repo}:${tag}${NC}" docker tag "${repo}":"${VS_VERSION}"-"${DOCKER_VERSION_NEW}" "${repo}":latest
+    execute "  Pushing Image to Repository: ${LAVENDER}${repo}${NC}" docker push "${repo}":latest
   fi
 done
 
