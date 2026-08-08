@@ -1,9 +1,12 @@
 [[source]]
-url = "https://grubhub.jfrog.io/artifactory/api/pypi/pypi/simple"
+url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pip_conf_index_global"
 
 [packages]
+docker = "*"
+PyGithub = "*"
+pydantic-settings = "*"
 fastapi = "*"
 python-socketio = "*"
 aiohttp = "*"
@@ -19,9 +22,6 @@ uvicorn = {extras = ["standard"], version = "*"}
 python-engineio = {extras = ["asyncio"], version = "*"}
 python-jose = {extras = ["cryptography"], version = "*"}
 passlib = {extras = ["bcrypt"], version = "*"}
-docker = "*"
-PyGithub = "*"
-pydantic-settings = "*"
 
 [dev-packages]
 
